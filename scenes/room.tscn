@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://syeurt4umf7g"]
+
+[node name="room" type="Node2D"]
+scale = Vector2(0.75, 0.75)
+
+[node name="background" type="ColorRect" parent="."]
+offset_right = 95.0
+offset_bottom = 95.0
+
+[node name="inner" type="ColorRect" parent="."]
+offset_left = 5.0
+offset_top = 7.0
+offset_right = 89.0
+offset_bottom = 88.0
+color = Color(0, 0, 0, 1)

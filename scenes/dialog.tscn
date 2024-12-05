@@ -1,0 +1,50 @@
+[gd_scene load_steps=6 format=3 uid="uid://c242e2c41ipgy"]
+
+[ext_resource type="Texture2D" uid="uid://cirtthqodtpql" path="res://assets/dialog.png" id="1_e1kfd"]
+[ext_resource type="FontFile" uid="uid://bvqshgjpwqgxr" path="res://assets/Bit-23.ttf" id="2_keh3f"]
+[ext_resource type="Script" path="res://scripts/CliScripts/Dialog.cs" id="3_rv8kj"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_6pvfq"]
+texture = ExtResource("1_e1kfd")
+texture_margin_left = 50.0
+texture_margin_top = 50.0
+texture_margin_right = 50.0
+texture_margin_bottom = 50.0
+
+[sub_resource type="Theme" id="Theme_54qlf"]
+default_font = ExtResource("2_keh3f")
+default_font_size = 20
+Panel/styles/panel = SubResource("StyleBoxTexture_6pvfq")
+
+[node name="dialog" type="Control"]
+layout_mode = 3
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -235.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = SubResource("Theme_54qlf")
+script = ExtResource("3_rv8kj")
+
+[node name="background" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 33.0
+offset_top = 35.0
+offset_right = 1121.0
+offset_bottom = 187.0
+
+[node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer"]
+layout_mode = 2
+text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed gravida sollicitudin justo, nec imperdiet justo porta vitae. Quisque a interdum tellus. Etiam in dictum nulla. Nulla vulputate faucibus nulla, in tincidunt nisi posuere ac. Vestibulum libero neque, euismod at justo eu, facilisis ultricies odio. Mauris dapibus orci id fermentum sodales. Praesent risus purus, porttitor at gravida sed, interdum at neque. Nulla interdum nulla elit, at dictum tortor tempor id. Aenean et nulla ligula. Maecenas non nunc tincidunt, volutpat nunc vitae, scelerisque libero. Nulla semper dictum bibendum. Nunc interdum urna et pellentesque posuere. Etiam a accumsan mauris. Phasellus eget ligula feugiat, rutrum nulla sit amet, egestas lectus. Maecenas rutrum, quam in condimentum rhoncus, elit l"
+fit_content = true
+scroll_active = false
