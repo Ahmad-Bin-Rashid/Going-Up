@@ -1,0 +1,18 @@
+using System;
+using System.Collections.Generic;
+
+namespace GoingDown
+{
+    public class TrapRoom : Room
+    {
+        public TrapRoom((int, int) position)
+            : base(RoomType.Trap, position) { }
+
+        public bool AttemptEvasion(Player player)
+        {
+            // Logic for trap evasion.
+            return true;
+        }
+    }
+
+}

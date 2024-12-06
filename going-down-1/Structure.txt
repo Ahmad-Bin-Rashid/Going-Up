@@ -1,0 +1,23 @@
+/GameManager.cs
+/Map/
+    Floor.cs
+    Room.cs
+    LargeRoom.cs
+    TreasureRoom.cs
+    TrapRoom.cs
+    BossRoom.cs
+/Player/
+    Player.cs
+/Enemy/
+    Enemy.cs
+    Boss.cs
+/Items/
+    Item.cs
+    Weapon.cs
+    Armor.cs
+    Potion.cs
+/Combat/
+    CombatManager.cs
+    Card.cs
+/Utilities/
+    DiceRoller.cs
