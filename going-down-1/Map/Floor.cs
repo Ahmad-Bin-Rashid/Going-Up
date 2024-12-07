@@ -12,12 +12,21 @@ namespace GoingDown
         public Room BossRoom { get; private set; }
 
         private Random random = new();
+        private int MIN_COORD;
+        private int MAX_COORD;
+        private int MIN_ADDITIONAL_ROOMS;
+        private int MAX_ADDITIONAL_ROOMS;
 
-        public void GenerateFloorGraph()
+        public void GenerateFloorGraph(int MIN_COORD = 0, int MAX_COORD = 5, int MIN_ADDITIONAL_ROOMS = 3, int MAX_ADDITIONAL_ROOMS = 5)
         {
+            this.MIN_COORD = MIN_COORD;
+            this.MAX_COORD = MAX_COORD;
+            this.MIN_ADDITIONAL_ROOMS = MIN_ADDITIONAL_ROOMS;
+            this.MAX_ADDITIONAL_ROOMS = MAX_ADDITIONAL_ROOMS;
+
             Console.WriteLine("Generating Floor...");
-            SpawnRoom = new Room(RoomType.Spawn, (0, 0));
-            BossRoom = new Room(RoomType.Boss, (5, 5));
+            SpawnRoom = new Room(RoomType.Spawn, (MIN_COORD, MIN_COORD));
+            BossRoom = new Room(RoomType.Boss, (MAX_COORD, MAX_COORD));
 
             Rooms.Add(SpawnRoom);
             Rooms.Add(BossRoom);
@@ -60,16 +69,16 @@ namespace GoingDown
         private void AddAdditionalRooms()
         {
             Console.WriteLine("Adding Additional Rooms...");
-            int additionalRooms = random.Next(3, 7);
+            int additionalRooms = random.Next(MIN_ADDITIONAL_ROOMS, MAX_ADDITIONAL_ROOMS);
 
             for (int i = 0; i < additionalRooms; i++)
             {
                 RoomType randomType = (RoomType)random.Next(2, Enum.GetValues(typeof(RoomType)).Length);
                 (int, int) randomPosition = GenerateUniquePosition();
-                Room newRoom = new Room(randomType, randomPosition);
+                Room newRoom = new(randomType, randomPosition);
                 Rooms.Add(newRoom);
 
-                int connections = random.Next(2, 5);
+                int connections = random.Next(2, 4);
                 for (int j = 0; j < connections; j++)
                 {
                     Room existingRoom = Rooms[random.Next(Rooms.Count)];
@@ -83,7 +92,7 @@ namespace GoingDown
             (int, int) position;
             do
             {
-                position = (random.Next(0, 5), random.Next(0, 5));
+                position = (random.Next(MIN_COORD, MAX_COORD), random.Next(MIN_COORD, MAX_COORD));
             } while (Rooms.Exists(r => r.Position == position));
             return position;
         }
