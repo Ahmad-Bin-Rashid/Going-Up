@@ -20,6 +20,7 @@ namespace GoingDown
 		public string GetPlayerMoveCategoryOptions(int choice)
 		{
 			string result = "";
+			
 			string[] options = GetAvailableMoveCategoryOptions();
 			if (choice == 1)
 			{

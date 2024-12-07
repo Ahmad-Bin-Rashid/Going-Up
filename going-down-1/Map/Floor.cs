@@ -50,7 +50,7 @@ namespace GoingDown
                     currentPosition.Item2 + Math.Sign(end.Position.Item2 - currentPosition.Item2)
                 );
 
-                Room? existingRoom = Rooms.Find(r => r.Position == nextPosition);
+                Room existingRoom = Rooms.Find(r => r.Position == nextPosition);
                 if (existingRoom != null)
                 {
                     current.Connect(existingRoom);
