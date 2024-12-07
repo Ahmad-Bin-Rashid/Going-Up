@@ -17,7 +17,7 @@ namespace GoingDown
         {
             Console.WriteLine("Generating Floor...");
             SpawnRoom = new Room(RoomType.Spawn, (0, 0));
-            BossRoom = new Room(RoomType.Boss, (10, 10));
+            BossRoom = new Room(RoomType.Boss, (5, 5));
 
             Rooms.Add(SpawnRoom);
             Rooms.Add(BossRoom);
@@ -60,7 +60,7 @@ namespace GoingDown
         private void AddAdditionalRooms()
         {
             Console.WriteLine("Adding Additional Rooms...");
-            int additionalRooms = random.Next(5, 10);
+            int additionalRooms = random.Next(3, 7);
 
             for (int i = 0; i < additionalRooms; i++)
             {
@@ -83,7 +83,7 @@ namespace GoingDown
             (int, int) position;
             do
             {
-                position = (random.Next(-10, 10), random.Next(-10, 10));
+                position = (random.Next(0, 5), random.Next(0, 5));
             } while (Rooms.Exists(r => r.Position == position));
             return position;
         }
