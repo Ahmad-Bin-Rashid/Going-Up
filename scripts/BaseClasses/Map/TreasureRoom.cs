@@ -7,7 +7,7 @@ namespace GoingDown
     public class TreasureRoom : Room
     {
         public TreasureRoom((int, int) position)
-            : base(RoomType.Treasure, position) { }
+            : base(Utils.RoomType.Treasure, position) { }
 
         public Item GenerateLoot()
         {

@@ -13,16 +13,5 @@ namespace GoingDown
 		{
 		}
 
-		public int _Process_Command(string text)
-		{
-			if(int.TryParse(text, out int result))
-			{
-				return result;
-			}
-			else
-			{
-				return 0;
-			}
-		}
 	}
 }

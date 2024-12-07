@@ -17,8 +17,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-InputManager="*res://scripts/GlobalScripts/InputManager.cs"
 Utils="*res://scripts/GlobalScripts/Utils.cs"
+InputManager="*res://scripts/GlobalScripts/InputManager.cs"
 Global="*res://scripts/GlobalScripts/Global.cs"
 
 [dotnet]

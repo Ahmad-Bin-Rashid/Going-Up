@@ -9,7 +9,7 @@ namespace GoingDown
         public Potion Trap { get; private set; }
 
         public TrapRoom((int, int) position)
-            : base(RoomType.Trap, position) { }
+            : base(Utils.RoomType.Trap, position) { }
 
         public bool AttemptEvasion(Player player)
         {

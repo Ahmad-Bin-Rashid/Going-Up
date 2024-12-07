@@ -17,6 +17,7 @@ namespace GoingDown
         private int MIN_ADDITIONAL_ROOMS;
         private int MAX_ADDITIONAL_ROOMS;
 
+        // Floor generation Functions ....
         public void GenerateFloorGraph(int MIN_COORD = 0, int MAX_COORD = 5, int MIN_ADDITIONAL_ROOMS = 3, int MAX_ADDITIONAL_ROOMS = 5)
         {
             this.MIN_COORD = MIN_COORD;
@@ -24,9 +25,9 @@ namespace GoingDown
             this.MIN_ADDITIONAL_ROOMS = MIN_ADDITIONAL_ROOMS;
             this.MAX_ADDITIONAL_ROOMS = MAX_ADDITIONAL_ROOMS;
 
-            Console.WriteLine("Generating Floor...");
-            SpawnRoom = new Room(RoomType.Spawn, (MIN_COORD, MIN_COORD));
-            BossRoom = new Room(RoomType.Boss, (MAX_COORD, MAX_COORD));
+            GD.Print("Generating Floor...");
+            SpawnRoom = new Room(Utils.RoomType.Spawn, (MIN_COORD, MIN_COORD) ,true);
+            BossRoom = new Room(Utils.RoomType.Boss, (MAX_COORD, MAX_COORD) ,true);
 
             Rooms.Add(SpawnRoom);
             Rooms.Add(BossRoom);
@@ -34,12 +35,11 @@ namespace GoingDown
             CreatePath(SpawnRoom, BossRoom);
             AddAdditionalRooms();
             EnsureConnectivity();
-            Console.WriteLine("Floor Generated!");
+            GD.Print("Floor Generated!");
         }
-
         private void CreatePath(Room start, Room end)
         {
-            Console.WriteLine("Creating Main Path...");
+            GD.Print("Creating Main Path...");
             Room current = start;
 
             while (!current.Equals(end))
@@ -58,22 +58,21 @@ namespace GoingDown
                 }
                 else
                 {
-                    Room newRoom = new Room(RoomType.Large, nextPosition);
+                    Room newRoom = new Room(Utils.RoomType.Large, nextPosition);
                     Rooms.Add(newRoom);
                     current.Connect(newRoom);
                     current = newRoom;
                 }
             }
         }
-
         private void AddAdditionalRooms()
         {
-            Console.WriteLine("Adding Additional Rooms...");
+            GD.Print("Adding Additional Rooms...");
             int additionalRooms = random.Next(MIN_ADDITIONAL_ROOMS, MAX_ADDITIONAL_ROOMS);
 
             for (int i = 0; i < additionalRooms; i++)
             {
-                RoomType randomType = (RoomType)random.Next(2, Enum.GetValues(typeof(RoomType)).Length);
+                Utils.RoomType randomType = (Utils.RoomType)random.Next(2, Enum.GetValues(typeof(Utils.RoomType)).Length);
                 (int, int) randomPosition = GenerateUniquePosition();
                 Room newRoom = new(randomType, randomPosition);
                 Rooms.Add(newRoom);
@@ -86,7 +85,6 @@ namespace GoingDown
                 }
             }
         }
-
         private (int, int) GenerateUniquePosition()
         {
             (int, int) position;
@@ -96,10 +94,9 @@ namespace GoingDown
             } while (Rooms.Exists(r => r.Position == position));
             return position;
         }
-
         private void EnsureConnectivity()
         {
-            Console.WriteLine("Ensuring Connectivity...");
+            GD.Print("Ensuring Connectivity...");
             HashSet<Room> visited = new();
             Queue<Room> queue = new();
             queue.Enqueue(SpawnRoom);

@@ -1,15 +1,21 @@
 using Godot;
 using System;
-
-public partial class Global : Node
+namespace GoingDown
 {
-	
-	public override void _Ready()
+	public partial class Global : Node
 	{
-		
+		public static Global Instance { get; private set; }
+		public MapManager mapManager ;
+		public override void _Ready()
+		{
+			Instance = this;
+
+			mapManager = GetNode<MapManager>("/root/main/MapManager");
+			
+		}
+
+
+
+
 	}
-
-
-
-
 }

@@ -9,7 +9,7 @@ namespace GoingDown
         public Enemy Boss { get; private set; }
 
         public BossRoom((int, int) position, Enemy boss)
-            : base(RoomType.Boss, position)
+            : base(Utils.RoomType.Boss, position)
         {
             Boss = boss;
         }

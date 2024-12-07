@@ -4,7 +4,7 @@ using Godot;
 
 namespace GoingDown
 {
-    public class MapManager
+    public class Map
     {
         public List<Floor> Floors { get; private set; } = new();
 
@@ -16,6 +16,10 @@ namespace GoingDown
                 floor.GenerateFloorGraph();
                 Floors.Add(floor);
             }
+        }
+        public List<Floor> GetAllFloors()
+        {
+            return Floors;
         }
     }
 

@@ -11,7 +11,7 @@ namespace GoingDown
         private Random random = new();
 
         public LargeRoom((int, int) position)
-            : base(RoomType.Large, position) { }
+            : base(Utils.RoomType.Large, position) { }
 
         public void GenerateEncounters()
         {
