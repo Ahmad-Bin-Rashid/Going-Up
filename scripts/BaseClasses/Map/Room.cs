@@ -64,8 +64,8 @@ namespace GoingDown
                 }
                 else
                 {
-                    rooms.Add(connectedRoom.Type.ToString());
-                    // rooms.Add("????????");       //Disabled for testing
+                    // rooms.Add(connectedRoom.Type.ToString());
+                     rooms.Add("????????");       //Disabled for testing
                 }
                 
             }

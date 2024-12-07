@@ -44,6 +44,7 @@ public partial class MapManager : Node
 		else
 		{
 			current_room = connections[door];
+			current_room.visited = true;
 		}
 	}
 	public Room GetCurrentRoom()
