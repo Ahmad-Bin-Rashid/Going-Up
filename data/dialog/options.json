@@ -1,0 +1,4 @@
+{
+    "combat": ["Attack", "Use Item", "Pass Turn"],
+    "out_of_combat": ["Continue Moving","Change Attack Graph" ,"View Inventory", "Open Map"]
+}

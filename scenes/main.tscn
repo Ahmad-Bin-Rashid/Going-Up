@@ -33,6 +33,8 @@ script = ExtResource("1_2rmj7")
 [node name="CommandProcessor" type="Node" parent="."]
 script = ExtResource("2_qr55l")
 
+[node name="MapManager" type="Node" parent="."]
+
 [node name="Background" type="PanelContainer" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
@@ -101,5 +103,4 @@ max_length = 70
 expand_to_text_length = true
 script = ExtResource("5_l41mm")
 
-[connection signal="text_submitted" from="Background/Margins/Rows/CliText/Dialog/VBoxContainer/HBoxContainer/input" to="." method="_on_dialog_input_text_changed"]
 [connection signal="text_submitted" from="Background/Margins/Rows/CliText/Dialog/VBoxContainer/HBoxContainer/input" to="Background/Margins/Rows/CliText/Dialog/VBoxContainer/HBoxContainer/input" method="_on_dialog_input_text_changed"]

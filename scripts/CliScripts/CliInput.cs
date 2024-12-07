@@ -4,19 +4,18 @@ namespace GoingDown
 {
 	public partial class CliInput : LineEdit
 	{
-		// Called when the node enters the scene tree for the first time.
+
 		public override void _Ready()
 		{
-			GrabFocus();
-		}
-
-		// Called every frame. 'delta' is the elapsed time since the previous frame.
-		public override void _Process(double delta)
-		{
+			//This makes so that the TextBox is always selected when game starts.
+			GrabFocus();		
 		}
 
 		private void _on_dialog_input_text_changed(string newText)
 		{
+			// This sends the entered text to InputManager. 
+			InputManager.Instance.OnTextSubmitted(newText);
+			//This clears the TextBox.
 			Clear();
 		}
 	}

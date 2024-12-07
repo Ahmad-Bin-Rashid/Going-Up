@@ -17,7 +17,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Enums="*res://scripts/GlobalScripts/Enums.cs"
+InputManager="*res://scripts/GlobalScripts/InputManager.cs"
+Utils="*res://scripts/GlobalScripts/Utils.cs"
 Global="*res://scripts/GlobalScripts/Global.cs"
 
 [dotnet]
@@ -28,7 +29,7 @@ project/assembly_name="going down"
 
 folder_colors={
 "res://assets/": "red",
-"res://other/": "orange",
+"res://data/": "orange",
 "res://scenes/": "yellow",
 "res://scripts/": "green"
 }
