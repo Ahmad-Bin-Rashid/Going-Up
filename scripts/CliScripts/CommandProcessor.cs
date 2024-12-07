@@ -1,26 +1,28 @@
 using Godot;
 using System;
-
-public partial class CommandProcessor : Node
+namespace GoingDown
 {
-	
-	public override void _Ready()
+	public partial class CommandProcessor : Node
 	{
-	}
-
-	public override void _Process(double delta)
-	{
-	}
-
-	public int _Process_Command(string text)
-	{
-		if(int.TryParse(text, out int result))
+		
+		public override void _Ready()
 		{
-			return result;
 		}
-		else
+
+		public override void _Process(double delta)
 		{
-			return 0;
+		}
+
+		public int _Process_Command(string text)
+		{
+			if(int.TryParse(text, out int result))
+			{
+				return result;
+			}
+			else
+			{
+				return 0;
+			}
 		}
 	}
 }
