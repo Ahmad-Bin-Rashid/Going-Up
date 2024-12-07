@@ -5,6 +5,8 @@ namespace GoingDown
 {
     public class TrapRoom : Room
     {
+        public Potion Trap { get; private set; }
+
         public TrapRoom((int, int) position)
             : base(RoomType.Trap, position) { }
 
