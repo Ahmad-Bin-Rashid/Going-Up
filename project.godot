@@ -21,6 +21,10 @@ Utils="*res://scripts/GlobalScripts/Utils.cs"
 InputManager="*res://scripts/GlobalScripts/InputManager.cs"
 Global="*res://scripts/GlobalScripts/Global.cs"
 
+[display]
+
+window/stretch/mode="canvas_items"
+
 [dotnet]
 
 project/assembly_name="going down"

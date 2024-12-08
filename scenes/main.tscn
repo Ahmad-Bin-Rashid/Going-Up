@@ -81,7 +81,6 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed gravida sollicitudin justo, nec imperdiet justo porta vitae. Quisque a interdum tellus. Etiam in dictum nulla. Nulla vulputate faucibus nulla, in tincidunt nisi posuere ac. Vestibulum libero neque, euismod at justo eu, facilisis ultricies odio. Mauris dapibus orci id fermentum sodales. Praesent risus purus, porttitor at gravida sed, interdum at neque. Nulla interdum nulla elit, at dictum tortor tempor id. Aenean et nulla ligula. Maecenas non nunc tincidunt, volutpat nunc vitae, scelerisque libero. Nulla semper dictum bibendum. Nunc interdum urna et pellentesque posuere. Etiam a accumsan mauris. Phasellus eget ligula feugiat, rutrum nulla sit amet, egestas lectus. Maecenas rutrum, quam in condimentum rhoncus, elit l"
-scroll_active = false
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Background/Margins/Rows/CliText/Dialog/VBoxContainer"]
 layout_mode = 2
