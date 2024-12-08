@@ -1,12 +1,10 @@
-[gd_scene load_steps=15 format=3 uid="uid://bn8k316dlgrgp"]
+[gd_scene load_steps=13 format=3 uid="uid://bn8k316dlgrgp"]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_2rmj7"]
 [ext_resource type="FontFile" uid="uid://bvqshgjpwqgxr" path="res://assets/Bit-23.ttf" id="2_0qpuk"]
-[ext_resource type="Script" path="res://scripts/CliScripts/CommandProcessor.cs" id="2_qr55l"]
-[ext_resource type="Script" path="res://scripts/CliScripts/Dialog.cs" id="3_woje4"]
 [ext_resource type="Script" path="res://scripts/Managers/MapManager.cs" id="3_yssj8"]
 [ext_resource type="Texture2D" uid="uid://cirtthqodtpql" path="res://assets/dialog.png" id="4_vc0h1"]
-[ext_resource type="Script" path="res://scripts/CliScripts/CliInput.cs" id="5_l41mm"]
+[ext_resource type="Script" path="res://scripts/NodeExtensions/CliInput.cs" id="5_l41mm"]
 
 [sub_resource type="Theme" id="Theme_5rp4f"]
 
@@ -30,9 +28,6 @@ default_font_size = 20
 
 [node name="main" type="Node"]
 script = ExtResource("1_2rmj7")
-
-[node name="CommandProcessor" type="Node" parent="."]
-script = ExtResource("2_qr55l")
 
 [node name="MapManager" type="Node" parent="."]
 script = ExtResource("3_yssj8")
@@ -87,7 +82,6 @@ custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed gravida sollicitudin justo, nec imperdiet justo porta vitae. Quisque a interdum tellus. Etiam in dictum nulla. Nulla vulputate faucibus nulla, in tincidunt nisi posuere ac. Vestibulum libero neque, euismod at justo eu, facilisis ultricies odio. Mauris dapibus orci id fermentum sodales. Praesent risus purus, porttitor at gravida sed, interdum at neque. Nulla interdum nulla elit, at dictum tortor tempor id. Aenean et nulla ligula. Maecenas non nunc tincidunt, volutpat nunc vitae, scelerisque libero. Nulla semper dictum bibendum. Nunc interdum urna et pellentesque posuere. Etiam a accumsan mauris. Phasellus eget ligula feugiat, rutrum nulla sit amet, egestas lectus. Maecenas rutrum, quam in condimentum rhoncus, elit l"
 scroll_active = false
-script = ExtResource("3_woje4")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Background/Margins/Rows/CliText/Dialog/VBoxContainer"]
 layout_mode = 2
