@@ -8,7 +8,7 @@ namespace GoingDown
 	{
 		public static InputManager Instance { get; private set; }	// Used to access this singleton in other scripts
 		private RichTextLabel dialog; 										// Used to Store Dialog box reference 
-		public Utils.GameState currentGameState;
+		
 		
 		//Manager references
 		
@@ -18,7 +18,7 @@ namespace GoingDown
 		public override void _Ready()
 		{
 			Instance = this ;
-			currentGameState = Utils.GameState.Map_terversal;
+			
 			//Initailizing OptionManager to Load options from file.
 			OptionManager.Ready();
 			currentOptions = OptionManager.GetOptions(Utils.GameState.Map_terversal.ToString());
@@ -31,7 +31,7 @@ namespace GoingDown
 		public void OnTextSubmitted(string text)
 		{
 			int selected_option = ParseOptions(text);
-			if(currentGameState == Utils.GameState.Map_terversal)
+			if(Global.Instance.currentGameState == Utils.GameState.Map_terversal)
 			{
 				Global.Instance.mapManager.MoveRooms(selected_option);
 				EnterRoom(Global.Instance.mapManager.GetCurrentRoom());
@@ -65,15 +65,15 @@ namespace GoingDown
 		} 
 		public string GetCurrentOptions()
 		{
-			if(currentGameState == Utils.GameState.Menu)
+			if(Global.Instance.currentGameState == Utils.GameState.Menu)
 			{
 				currentOptions = OptionManager.GetOptions(Utils.GameState.Menu.ToString());
 			}
-			else if (currentGameState == Utils.GameState.Combat)
+			else if (Global.Instance.currentGameState == Utils.GameState.Combat)
 			{
 				currentOptions = OptionManager.GetOptions(Utils.GameState.Combat.ToString());
 			}
-			else if (currentGameState == Utils.GameState.Attack_graph)
+			else if (Global.Instance.currentGameState == Utils.GameState.Attack_graph)
 			{
 				currentOptions = OptionManager.GetOptions(Utils.GameState.Attack_graph.ToString());
 			}
