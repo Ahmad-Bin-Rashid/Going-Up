@@ -12,11 +12,6 @@ namespace GoingDown
 			Instance = this;
 			Global.Instance.currentGameState = Utils.GameState.Map_terversal;
 			mapManager = GetNode<MapManager>("/root/main/MapManager");
-			
 		}
-
-
-
-
 	}
 }

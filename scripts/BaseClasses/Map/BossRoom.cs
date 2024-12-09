@@ -12,6 +12,7 @@ namespace GoingDown
             : base(Utils.RoomType.Boss, position)
         {
             Boss = boss;
+            GD.Print($"Boss Room created with {Boss.Name}");
         }
     }
 

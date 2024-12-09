@@ -15,14 +15,30 @@ public partial class Utils : Node
         Treasure,
         Trap
     }
+	public enum TreasureType
+	{
+		Armor,
+		Weapon,
+		Potion
+	}
+	public enum TrapType
+	{
+		Fire,
+		Ice,
+		Poison
+	}
+	public enum EnemyType
+	{
+		GoblinScout,
+		SkeletonWarrior,
+		CaveSpider
+	}
 	public enum GameState
 	{
 		Menu,
 		Map_terversal,
 		Combat,
 		Attack_graph
-		
-
 	}
 	public override void _Ready()
 	{

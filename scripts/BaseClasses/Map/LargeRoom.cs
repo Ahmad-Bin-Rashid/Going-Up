@@ -6,50 +6,42 @@ namespace GoingDown
 {
     public class LargeRoom : Room
     {
-        public List<Encounter> Encounters { get; private set; } = new();
+        public Enemy Enemy { get; private set; }
 
         private Random random = new();
 
         public LargeRoom((int, int) position)
-            : base(Utils.RoomType.Large, position) { }
-
-        public void GenerateEncounters()
+            : base(Utils.RoomType.Large, position) 
         {
-            Console.WriteLine("Generating encounters in the Large Room...");
+            random = new Random();
+            Utils.EnemyType enemyType = (EnemyType)random.Next(1, Enum.GetValues(typeof(EnemyType)).Length);
 
-            // Example: Randomly add 1-3 encounters
-            int encounterCount = random.Next(1, 4);
-
-            for (int i = 0; i < encounterCount; i++)
+            switch (enemyType)
             {
-                int encounterType = random.Next(1, 4); // Randomly choose encounter type
-                switch (encounterType)
-                {
-                    case 1: // Enemy Encounter
-                        Enemy enemy = new Goblin(); // Example: Create a Goblin enemy
-                        Encounters.Add(new EnemyEncounter(enemy));
-                        break;
-
-                    case 2: // Trap Encounter
-                        int trapDamage = DiceRoller.Roll(1, 6); // Example: 1d6 damage trap
-                        Encounters.Add(new Trap(trapDamage));
-                        break;
-
-                    case 3: // Treasure Encounter
-                        Item treasure = new Potion("Healing Potion", RarityType.Common, Potion.PotionType.Healing);
-                        Encounters.Add(new TreasureEncounter(treasure));
-                        break;
-                }
+                case Utils.EnemyType.GoblinScout:
+                    Enemy = new GoblinScout();
+                    break;
+                case Utils.EnemyType.SkeletonWarrior:
+                    Enemy = new SkeletonWarrior();
+                    break;
+                case Utils.EnemyType.CaveSpider:
+                    Enemy = new CaveSpider();
+                    break;
             }
+
+            GD.Print($"Large Room created with {Enemy.Name}");
         }
 
-        public void ResolveEncounters(Player player)
+        public Enemy GetEnemy()
         {
-            foreach (var encounter in Encounters)
-            {
-                encounter.Resolve(player);
-                if (!player.IsAlive) break; // Stop if the player dies
-            }
+            return Enemy;
         }
-    }
+
+        public Enemy RemoveEnemy()
+        {
+            var temp = Enemy;
+            Enemy = null;
+            return temp;
+        }
+    }   
 }
