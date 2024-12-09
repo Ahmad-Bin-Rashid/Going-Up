@@ -9,34 +9,39 @@ namespace going_down
 {
     public class Floor
     {
+        public int FloorNumber { get; private set; }
         public List<Room> Rooms { get; private set; }
 
-        public Floor()
+        public Floor(int floorNumber, int minRooms, int maxRooms)
         {
+            FloorNumber = floorNumber;
             Rooms = new List<Room>();
+            GenerateMap(minRooms, maxRooms);
         }
 
-        public void GenerateMap()
+        private void GenerateMap(int minRooms, int maxRooms)
         {
-            // Step 1: Create rooms with coordinates
-            Rooms.Add(new Room(RoomType.Spawn, 0, 0)); // Spawn room at (0,0)
-            Rooms.Add(new Room(RoomType.Boss, 10, 10)); // Boss room at (10,10)
             var random = new Random();
+            int roomCount = random.Next(minRooms, maxRooms + 1);
+            
+            // Step 1: Create spawn and boss rooms
+            Rooms.Add(new Room(RoomType.Spawn, (0, 0))); // Spawn room at (0,0)
+            Rooms.Add(new Room(RoomType.Boss, (10, 10))); // Boss room at (10,10)
 
-            Rooms.Add(new Room(RoomType.Large, random.Next(1, 10), random.Next(1, 10)));
-            Rooms.Add(new Room(RoomType.Treasure, random.Next(1, 10), random.Next(1, 10)));
-            Rooms.Add(new Room(RoomType.Trap, random.Next(1, 10), random.Next(1, 10)));
+            // Step 2: Ensure at least one of each required room type
+            Rooms.Add(new Room(RoomType.Large, (random.Next(1, 10), random.Next(1, 10))));
+            Rooms.Add(new Room(RoomType.Large, (random.Next(1, 10), random.Next(1, 10))));
 
-            for (int i = 0; i < 4 + random.Next(0, 3); i++) // 5 to 7 generic rooms
+            // Step 3: Generate additional random rooms
+            for (int i = 0; i < roomCount - 4; i++) // Remaining rooms after the fixed ones
             {
                 int x = random.Next(1, 10);
                 int y = random.Next(1, 10);
-
                 RoomType randomType = (RoomType)random.Next(2, 5); // Random between Large, Treasure, Trap
-                Rooms.Add(new Room(randomType, x, y));
+                Rooms.Add(new Room(randomType, (x, y)));
             }
 
-            // Step 2: Connect rooms based on shortest distance
+            // Step 4: Connect rooms based on shortest distance
             ConnectRooms();
         }
 
