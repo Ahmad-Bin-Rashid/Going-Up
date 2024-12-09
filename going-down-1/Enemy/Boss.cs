@@ -5,41 +5,34 @@ namespace GoingDown
 {
     public class Boss : Enemy
     {
-        // Additional attributes for bosses
         public List<SpecialAbility> SpecialAbilities { get; private set; } = new List<SpecialAbility>();
 
-        public Boss(string name, int hp, int constitution, int baseDamage)
-            : base(name, hp, constitution, baseDamage)
+        public Boss(string name, int hp, int constitution, int strength) : base(name, hp, constitution, strength)
         {
         }
 
-        // Use a special ability
-        public void UseSpecialAbility(Player player)
+        public void AddSpecialAbility(SpecialAbility specialAbility)
         {
-            if (SpecialAbilities.Count == 0)
-            {
-                Console.WriteLine($"{Name} has no special abilities!");
-                return;
-            }
-
-            int index = random.Next(SpecialAbilities.Count);
-            SpecialAbility ability = SpecialAbilities[index];
-            Console.WriteLine($"{Name} used special ability: {ability.Name}");
-            ability.Execute(player, this);
+            SpecialAbilities.Add(specialAbility);
         }
 
-        // Overrides PerformAttack to include special abilities
-        public override void PerformAttack(Player player)
+        public void RemoveSpecialAbility(SpecialAbility specialAbility)
         {
-            if (random.Next(1, 101) <= 30) // 30% chance to use a special ability
-            {
-                UseSpecialAbility(player);
-            }
-            else
-            {
-                base.PerformAttack(player);
-            }
+            SpecialAbilities.Remove(specialAbility);
+        }
+
+        public override void Attack(Player player, Card card)
+        {
+            int damage = card.Damage + Strength;
+
+            player.TakeDamage(damage);
+        }
+
+        public override void Defend(Player player, Card card)
+        {
+            int damage = card.Damage - Constitution;
+
+            TakeDamage(damage);
         }
     }
-
 }

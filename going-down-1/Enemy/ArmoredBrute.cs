@@ -8,11 +8,9 @@ namespace GoingDown
         public ArmoredBrute()
             : base("Armored Brute", 30, 15, 2)
         {
-            // Add specific attack cards
             AttackCards.Add(new Card("Heavy Slam", 2, 0, 1));
             AttackCards.Add(new Card("Ground Stomp", 2, 0, 1, "Reduces player's next attack roll by 2"));
 
-            // Add special abilities
             SpecialAbilities.Add(new SpecialAbility(
                 "Shield Bash",
                 (player, self) =>
