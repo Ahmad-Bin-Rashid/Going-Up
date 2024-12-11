@@ -7,7 +7,7 @@ namespace GoingUp
         static void Main(string[] args)
         {
             Map map = new Map(3);
-            map.PrintMap();
+            
         }
     }
 }

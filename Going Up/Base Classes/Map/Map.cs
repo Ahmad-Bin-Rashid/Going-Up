@@ -25,6 +25,7 @@ namespace GoingUp
         {
             return Floors;
         }
+        
         public void PrintMap()
         {
             Console.WriteLine("Dungeon Map Overview:");
