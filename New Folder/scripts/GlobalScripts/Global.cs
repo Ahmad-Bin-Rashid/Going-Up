@@ -1,0 +1,20 @@
+using Godot;
+using System;
+namespace GoingDown
+{
+	public partial class Global : Node
+	{
+		public static Global Instance { get; private set; }
+		public Utils.GameState currentGameState;
+		public MapManager mapManager ;
+		public override void _Ready()
+		{
+			Instance = this;
+			Global.Instance.currentGameState = Utils.GameState.Map_terversal;
+			mapManager = new MapManager();
+
+		}
+
+		
+	}
+}

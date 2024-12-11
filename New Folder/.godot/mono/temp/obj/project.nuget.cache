@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "+Plzccqe6qcH/I3HZOcb1DHqTEov4Rcs7QEpTUcWT0Z4hfp2NgQhLXhmBZMoJWCa9QivDeHsc5AJE3k4mY5VPg==",
+  "success": true,
+  "projectFilePath": "/mnt/art/University/Semester 3/DSA/Going-down/going down.csproj",
+  "expectedPackageFiles": [
+    "/home/vendy/.nuget/packages/godot.sourcegenerators/4.3.0/godot.sourcegenerators.4.3.0.nupkg.sha512",
+    "/home/vendy/.nuget/packages/godotsharp/4.3.0/godotsharp.4.3.0.nupkg.sha512",
+    "/home/vendy/.nuget/packages/godotsharpeditor/4.3.0/godotsharpeditor.4.3.0.nupkg.sha512",
+    "/home/vendy/.nuget/packages/microsoft.netcore.app.ref/6.0.35/microsoft.netcore.app.ref.6.0.35.nupkg.sha512",
+    "/home/vendy/.nuget/packages/microsoft.aspnetcore.app.ref/6.0.35/microsoft.aspnetcore.app.ref.6.0.35.nupkg.sha512"
+  ],
+  "logs": []
+}
