@@ -6,8 +6,9 @@ namespace GoingUp
     {
         static void Main(string[] args)
         {
-            Map map = new Map(3);
-            
+            MapManager mapManager = new MapManager(3);
+            Console.Clear();
+            mapManager.Displaymap();
         }
     }
 }
