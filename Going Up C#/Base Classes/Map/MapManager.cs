@@ -13,13 +13,12 @@ namespace GoingUp
 
         public void Displaymap()
         {
-            for (int i = 0; i < Map.Floors.Count; i++)
+            for (int j = 0; j < Map.Floors[0].Rooms.Count; j++)
             {
-                (int, int) position = Map.Floors[i].Rooms[0].Position;
-                Console.SetCursorPosition(position.Item1, position.Item2);
-
-                Console.WriteLine($"Floor {i + 1}");
-            }
+                var position = Map.Floors[0].Rooms[j].Position;
+                // Console.SetCursorPosition(position.Item1, position.Item2);
+                Console.WriteLine($"{position.Item1}, {position.Item2}");
+            }   
         }
     }
 }

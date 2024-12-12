@@ -27,19 +27,19 @@ namespace GoingUp
             
             // Step 1: Create spawn and boss rooms
             spawn = new Room(RoomType.Spawn, (0, 0));
-            boss = new Room(RoomType.Boss, (100, 100));
+            boss = new Room(RoomType.Boss, (50, 50));
             Rooms.Add(spawn); // Spawn room at (0,0)
             Rooms.Add(boss); // Boss room at (10,10)
 
             // Step 2: Ensure at least one of each required room type
-            Rooms.Add(new Room(RoomType.Large, (random.Next(1, 100), random.Next(1, 100))));
-            Rooms.Add(new Room(RoomType.Large, (random.Next(1, 100), random.Next(1, 100))));
+            Rooms.Add(new Room(RoomType.Large, (random.Next(1, 50), random.Next(1, 50))));
+            Rooms.Add(new Room(RoomType.Large, (random.Next(1, 50), random.Next(1, 50))));
 
             // Step 3: Generate additional random rooms
             for (int i = 0; i < roomCount - 4; i++) // Remaining rooms after the fixed ones
             {
-                int x = random.Next(1, 100);
-                int y = random.Next(1, 100);
+                int x = random.Next(1, 50);
+                int y = random.Next(1, 50);
                 RoomType randomType = (RoomType)random.Next(2, 5); // Random between Large, Treasure, Trap
                 Rooms.Add(new Room(randomType, (x, y)));
             }
@@ -58,7 +58,7 @@ namespace GoingUp
 
                 // Sort other rooms by distance
                 var potentialConnections = Rooms
-                    .Where(r => r != room && !room.Connections.Contains(r))
+                  .Where(r => r != room && !room.Connections.Contains(r))
                     .OrderBy(r => room.DistanceTo(r))
                     .ToList();
 
