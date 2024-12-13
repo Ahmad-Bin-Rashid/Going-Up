@@ -25,10 +25,18 @@ protected:
 public:
     AttackCard(std::string name, int damage) : name(name), damage(damage) {}
     virtual void use(Character& character) = 0;
+    std::string getName() const { return name; }
     virtual bool operator==(const AttackCard& other) const {
         return name == other.name && damage == other.damage;
     }
     virtual ~AttackCard() = default;
+};
+
+class SingleSlash : public AttackCard {
+public:
+    SingleSlash() : AttackCard("Single Slash", 1) {}
+
+    void use(Character& character);
 };
 
 class DoubleSlash : public AttackCard {
@@ -96,6 +104,10 @@ public:
         }
     }
 
+    std::vector<CardVariant> getCards() const {
+        return cards;
+    }
+
     virtual ~Character() = default;
 };
 
@@ -139,8 +151,16 @@ public:
         std::cout << "Enemy Health: " << health << "/" << maxHealth << std::endl;
     }
 
+    bool operator==(const Enemy& other) const {
+        return health == other.health && maxHealth == other.maxHealth && currentRoom == other.currentRoom;
+    }
+
     ~Enemy() = default;
 };
+
+void SingleSlash::use(Character& character) {
+    character.takeDamage(damage);
+}
 
 void DoubleSlash::use(Character& character) {
     character.takeDamage(damage);
@@ -150,61 +170,51 @@ void Bow::use(Character& character) {
     character.takeDamage(damage);
 }
 
-class LargeRoom {
-    private:
-        Room room;
-        std::vector<Enemy> enemies;
-    
-    public:
-        LargeRoom(Room room) : room(room) {}
-
-        void spawnEnemies() {
-            for (int i = 0; i < 5; i++) {
-                enemies.push_back(Enemy(room));
-            }
-        }
-};
-
-class TreasureRoom {
-    private:
-        Room room;
-        std::vector<CardVariant> cards;
-        bool isCleared;
-    
-    public:
-        TreasureRoom(Room room) : room(room), isCleared(false) {}
-
-        void openTreasure() {
-            std::cout << "You found a treasure!" << std::endl;
-            isCleared = true;
-        }
-};
-
 class Combat {
 private:
     Player& player;
-    Enemy& enemy;
+    std::vector<Enemy> enemies;
 
 public:
-    Combat(Player& player, Enemy& enemy) : player(player), enemy(enemy) {}
-
-    void playerTurn(AttackCard& card) {
-        card.use(enemy);
-    }
-
-    void enemyTurn() {
-        DoubleSlash doubleSlash;
-        doubleSlash.use(player);
-    }
+    Combat(Player& player, std::vector<Enemy>& enemies) : player(player), enemies(enemies) {}
 
     void start() {
-        while (player.isAlive() && enemy.isAlive()) {
-            DoubleSlash doubleSlash;
-            playerTurn(doubleSlash); 
+        while (player.isAlive() && !enemies.empty()) {
             player.printStatus();
-            enemy.printStatus();
+            for (auto& enemy : enemies) {
+                enemy.printStatus();
+            }
+
+            int choice;
+            std::cout << "Select a card to use: " << std::endl;
+            std::vector<CardVariant> cards = player.getCards();
+            for (size_t i = 0; i < cards.size(); ++i) {
+                std::cout << i << ". ";
+                std::visit([](const auto& card) { std::cout << card.getName() << std::endl; }, cards[i]);
+            }
+            std::cin >> choice;
+
+            if (choice < 0 || choice >= cards.size()) {
+                std::cout << "Invalid choice!" << std::endl;
+                continue;
+            }
+
+            for (auto& enemy : enemies) {
+                player.useCard(choice, enemy);
+                if (!enemy.isAlive()) {
+                    enemies.erase(std::remove(enemies.begin(), enemies.end(), enemy), enemies.end());
+                }
+            }
+
+            for (auto& enemy : enemies) {
+                enemy.takeDamage(1);
+                if (!player.isAlive()) {
+                    break;
+                }
+            }
         }
     }
+
     ~Combat() = default;
 };
 
@@ -385,29 +395,33 @@ public:
         throw std::runtime_error("Room not found");
     }
 
-    void DrawMap() const {
-        drawConnections();
+    void DrawMap(const std::set<int>& visitedRooms) const {
+        drawConnections(visitedRooms);
         for (const auto& room : rooms) {
-            char symbol = ' ';
-            switch (room.roomType) {
-                case RoomType::Spawn:    symbol = 'S'; break;
-                case RoomType::Treasure: symbol = 'T'; break;
-                case RoomType::Trap:     symbol = 'X'; break;
-                case RoomType::Large:    symbol = 'L'; break;
-                case RoomType::Boss:     symbol = 'B'; break;
-            }
+            if (visitedRooms.find(room.roomNumber) != visitedRooms.end()) {
+                char symbol = ' ';
+                switch (room.roomType) {
+                    case RoomType::Spawn:    symbol = 'S'; break;
+                    case RoomType::Treasure: symbol = 'T'; break;
+                    case RoomType::Trap:     symbol = 'X'; break;
+                    case RoomType::Large:    symbol = 'L'; break;
+                    case RoomType::Boss:     symbol = 'B'; break;
+                }
 
-            SetCursorAtXY(room.position.first, room.position.second);
-            std::cout << symbol;
+                SetCursorAtXY(room.position.first, room.position.second);
+                std::cout << symbol;
+            }
         }
     }
 
-    void drawConnections() const {
+    void drawConnections(const std::set<int>& visitedRooms) const {
         for (const auto& room : rooms) {
-            for (int connectedRoomNumber : room.connectedRooms) {
-                if (connectedRoomNumber >= 0 && connectedRoomNumber < rooms.size()) {
-                    const Room& connectedRoom = rooms[connectedRoomNumber];
-                    drawLine(room.position.first, room.position.second, connectedRoom.position.first, connectedRoom.position.second);
+            if (visitedRooms.find(room.roomNumber) != visitedRooms.end()) {
+                for (int connectedRoomNumber : room.connectedRooms) {
+                    if (visitedRooms.find(connectedRoomNumber) != visitedRooms.end()) {
+                        const Room& connectedRoom = rooms[connectedRoomNumber];
+                        drawLine(room.position.first, room.position.second, connectedRoom.position.first, connectedRoom.position.second);
+                    }
                 }
             }
         }
@@ -467,38 +481,99 @@ RoomType stringToRoomType(const std::string& type) {
     return RoomType::Spawn;
 }
 
+class LargeRoom {
+    private:
+        Room room;
+        std::vector<Enemy> enemies;
+        bool isCleared;
+    
+    public:
+        LargeRoom(Room room) : room(room), isCleared(false) {}
+
+        void spawnEnemies() {
+            std::cout << "Enemies have appeared!" << std::endl;
+            enemies.push_back(Enemy(room));
+            enemies.push_back(Enemy(room));
+            enemies.push_back(Enemy(room));
+        };
+
+        void enterRoom(Player& player) {
+            if (!isCleared) {
+                Combat combat(player, enemies);
+                combat.start();
+                isCleared = true;
+            }
+        }
+};
+
+class TreasureRoom {
+    private:
+        Room room;
+        std::vector<CardVariant> cards;
+        bool isCleared;
+    
+    public:
+        TreasureRoom(Room room) : room(room), isCleared(false) {}
+
+        void openTreasure() {
+            std::cout << "You found a treasure!" << std::endl;
+            isCleared = true;
+        }
+};
+
+class TrapRoom {
+    private:
+        Room room;
+        bool isCleared;
+
+    public:
+        TrapRoom(Room room) : room(room), isCleared(false) {}
+
+        void triggerTrap() {
+            std::cout << "You triggered a trap!" << std::endl;
+            isCleared = true;
+        }
+};
+
 class GameLogic {
 private:
     Floor floor;
     Room currentRoom;
     Player player;
     Enemy enemy;
+    std::set<int> visitedRooms; // Set to keep track of visited rooms
     
 public:
     GameLogic(int floorNumber, int minRooms, int maxRooms) 
         : floor(floorNumber, minRooms, maxRooms), 
           player(floor.getSpawnRoom()), 
           enemy(floor.getBossRoom()),
-          currentRoom(floor.getSpawnRoom()) {}
+          currentRoom(floor.getSpawnRoom()) {
+        visitedRooms.insert(currentRoom.roomNumber); // Mark the spawn room as visited
+    }
 
     void MainLoop() {
         system("cls");
-        floor.DrawMap();
+        floor.DrawMap(visitedRooms); // Pass visited rooms to DrawMap
         std::vector<Room> rooms = floor.getRooms();
 
-        SetCursorAtXY(0, MAX_MAP_Y + 1);
         while (player.isAlive() && enemy.isAlive()) {
+            SetCursorAtXY(0, MAX_MAP_Y + 1);
             std::cout << "Current Room: " << currentRoom << std::endl;
             std::cout << "Player: ";
             player.printStatus();
             std::cout << "Enemy: ";
             enemy.printStatus();
 
-            std::cout << "Connected Rooms Type: ";
+            std::cout << "Connected Rooms: " << std::endl;
             int count = 0;
             for (int connectedRoomNumber : currentRoom.connectedRooms) {
                 std::cout << count << ". ";
-                std::cout << roomTypeToString(rooms[connectedRoomNumber].roomType) << std::endl;
+                if (visitedRooms.find(connectedRoomNumber) != visitedRooms.end()) {
+                    std::cout << roomTypeToString(rooms[connectedRoomNumber].roomType) << "  (" <<  rooms[connectedRoomNumber].position.first << ", " << rooms[connectedRoomNumber].position.second << ")" << std::endl;
+                } else {
+                    std::cout << "??" << std::endl;
+                }
                 count++;
             }
 
@@ -513,6 +588,7 @@ public:
 
             int nextRoomNumber = currentRoom.connectedRooms[choice];
             currentRoom = rooms[nextRoomNumber];
+            visitedRooms.insert(currentRoom.roomNumber); // Mark the new room as visited
 
             if (currentRoom.roomType == RoomType::Large) {
                 LargeRoom largeRoom(currentRoom);
@@ -521,19 +597,55 @@ public:
                 TreasureRoom treasureRoom(currentRoom);
                 treasureRoom.openTreasure();
             }
+
+            system("cls");
+            floor.DrawMap(visitedRooms); // Redraw the map with updated visited rooms
         }        
     }
 };
 
 
-std::set<std::pair<int, int>> Floor::occupiedPositions;
 
+std::set<std::pair<int, int>> Floor::occupiedPositions;
 int main() {
     GameLogic game(1, 5, 10);
     game.MainLoop();
     return 0;
 }
 
+void testing() {
+    // std::vector<Room> rooms;
+    // rooms.push_back(Room(0, RoomType::Spawn, {0, 0}));
+    // rooms.push_back(Room(1, RoomType::Boss, {10, 10}));
+    // rooms.push_back(Room(2, RoomType::Large, {5, 5}));
+    // rooms.push_back(Room(3, RoomType::Large, {15, 15}));
+    // rooms.push_back(Room(4, RoomType::Large, {20, 20}));
+    // rooms.push_back(Room(5, RoomType::Large, {25, 25}));
+    // rooms.push_back(Room(6, RoomType::Large, {30, 30}));
+    // rooms.push_back(Room(7, RoomType::Large, {35, 35}));
+    // rooms.push_back(Room(8, RoomType::Large, {40, 40}));
+    // rooms.push_back(Room(9, RoomType::Large, {45, 45}));
+    // rooms.push_back(Room(10, RoomType::Large, {50, 50}));
+
+    // for (auto& room : rooms) {
+    //     std::cout << room << std::endl;
+    // }
+
+    // Floor floor(1, 5, 10);
+    // floor.printMapAndConnections();
+    // floor.DrawMap({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+
+    // std::cout << roomTypeToString(RoomType::Spawn) << std::endl;
+    // std::cout << roomTypeToString(RoomType::Boss) << std::endl;
+    // std::cout << roomTypeToString(RoomType::Trap) << std::endl;
+    // std::cout << roomTypeToString(RoomType::Large) << std::endl;
+    // std::cout << roomTypeToString(RoomType::Treasure) << std::endl;
+
+    // std::cout << stringToRoomType("Spawn") << std::endl;
+    // std::cout << stringToRoomType("Boss") << std::endl;
+    // std::cout << stringToRoomType("Trap") << std::endl;
+    // std::cout << stringToRoomType("Large") << std::endl;
+    // std::cout << stringToRoomType("Treasure")
 
 //////////////////////////// DLL Driver Main ////////////////////////
 
@@ -592,3 +704,4 @@ int main() {
 //     dll.printForward();
 
 //     }
+}
