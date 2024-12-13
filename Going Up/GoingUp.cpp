@@ -75,6 +75,10 @@ public:
         return health > 0;
     }
 
+    void SetCurrentRoom(Room room) {
+        currentRoom = room;
+    }
+
     void addCard(const CardVariant& card) {
         cards.push_back(card);
     }
@@ -158,9 +162,21 @@ class LargeRoom {
         }
 };
 
+class TreasureRoom {
+    private:
+        Room room;
+    
+    public:
+        TreasureRoom(Room room) : room(room) {}
+
+        void openTreasure() {
+            std::cout << "You found a treasure!" << std::endl;
+        }
+};
+
 class Combat {
 private:
-    Player& player;  // Use references to base class for polymorphism
+    Player& player;
     Enemy& enemy;
 
 public:
@@ -334,7 +350,25 @@ public:
     }
 
 
-     void DrawMap() const {
+    Room getBossRoom() const {
+        for (const auto& room : rooms) {
+            if (room.roomType == RoomType::Boss) {
+                return room;
+            }
+        }
+        throw std::runtime_error("Boss room not found");
+    }
+
+    Room getSpawnRoom() const {
+        for (const auto& room : rooms) {
+            if (room.roomType == RoomType::Spawn) {
+                return room;
+            }
+        }
+        throw std::runtime_error("Spawn room not found");
+    }
+
+    void DrawMap() const {
         drawConnections();
         for (const auto& room : rooms) {
             char symbol = ' ';
@@ -397,23 +431,48 @@ public:
     }
 };
 
+class GameLogic {
+private:
+    Floor floor;
+    Room currentRoom;
+    Player player;
+    Enemy enemy;
+    
+public:
+    GameLogic(int floorNumber, int minRooms, int maxRooms) 
+        : floor(floorNumber, minRooms, maxRooms), 
+          player(floor.getSpawnRoom()), 
+          enemy(floor.getBossRoom()),
+          currentRoom(floor.getSpawnRoom()) {}
+
+    void MainLoop() {
+        system("cls");
+        floor.DrawMap();
+        player.SetCurrentRoom(floor.getSpawnRoom());
+
+
+        while (player.isAlive() && enemy.isAlive()) {
+            system("cls");
+            floor.DrawMap();
+            player.printStatus();
+            enemy.printStatus();
+
+            for (int i = 0; i < currentRoom.connectedRooms.size(); i++) {
+                std::cout << i << ". " << currentRoom.connectedRooms[i] << std::endl;
+            }
+
+            int choice;
+            std::cin >> choice;
+            
+        }
+    }
+};
+
 
 std::set<std::pair<int, int>> Floor::occupiedPositions;
 
 int main() {
-    Floor floor(1, 5, 10);
-    system("cls");
-
-    // Player player(Room(0, RoomType::Spawn, {0, 0}));
-    // Enemy enemy(Room(1, RoomType::Boss, {1, 1}));
-
-    // CardVariant doubleSlash = DoubleSlash();
-    // player.addCard(doubleSlash);
-    // CardVariant bow = Bow();
-    // player.addCard(bow);
-
-    // Combat combat(player, enemy);
-    // combat.start();
-
+    GameLogic game(1, 5, 10);
+    game.MainLoop();
     return 0;
 }
