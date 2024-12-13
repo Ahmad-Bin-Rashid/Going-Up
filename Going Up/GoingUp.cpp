@@ -10,6 +10,8 @@
 #include "Room.h"
 #include "Queue.h"
 #include <string>
+#include "Enums.h"
+#include "DoublyLinkedList.h"
 
 #define MAX_MAP_X 50
 #define MAX_MAP_Y 30
@@ -31,14 +33,14 @@ public:
 
 class DoubleSlash : public AttackCard {
 public:
-    DoubleSlash() : AttackCard("Double Slash", 20) {}
+    DoubleSlash() : AttackCard("Double Slash", 2) {}
 
     void use(Character& character);
 };
 
 class Bow : public AttackCard {
 public:
-    Bow() : AttackCard("Bow", 15) {}
+    Bow() : AttackCard("Bow", 2) {}
 
     void use(Character& character);
 };
@@ -50,11 +52,12 @@ protected:
     int health;
     int maxHealth;
     Room currentRoom;
+    CharacterDirection direction;
     std::vector<CardVariant> cards;
 
 public:
     Character(int health, int maxHealth, Room currentRoom)
-        : health(health), maxHealth(maxHealth), currentRoom(currentRoom) {}
+        : health(health), maxHealth(maxHealth), currentRoom(currentRoom), direction(CharacterDirection::Right) {}
 
     virtual void takeDamage(int damage) {
         health -= damage;
@@ -165,12 +168,15 @@ class LargeRoom {
 class TreasureRoom {
     private:
         Room room;
+        std::vector<CardVariant> cards;
+        bool isCleared;
     
     public:
-        TreasureRoom(Room room) : room(room) {}
+        TreasureRoom(Room room) : room(room), isCleared(false) {}
 
         void openTreasure() {
             std::cout << "You found a treasure!" << std::endl;
+            isCleared = true;
         }
 };
 
@@ -516,7 +522,6 @@ public:
                 treasureRoom.openTreasure();
             }
         }        
-            
     }
 };
 
@@ -528,3 +533,62 @@ int main() {
     game.MainLoop();
     return 0;
 }
+
+
+//////////////////////////// DLL Driver Main ////////////////////////
+
+// DoublyLinkedList<std::unordered_map<int, std::string>> dll;
+
+//     dll.pushBack({{1, "X"}});
+//     dll.pushBack({{2, "P"}});
+//     dll.pushBack({{3, "X"}});
+//     dll.pushBack({{4, "E1"}});
+//     dll.pushBack({{5, "E2"}});
+
+//     while (true)
+//     {
+//     int choice;
+//     std::cout << "Menu: " << std::endl;
+//     std::cout << "1. Move Player Forward" << std::endl;
+//     std::cout << "2. Move Player Backward" << std::endl;
+//     std::cout << "3. Move Enemies Forward" << std::endl;
+//     std::cout << "4. Move Enemies Backward" << std::endl;
+//     std::cin >> choice;
+
+//     if (choice == 1) {
+//         int position = dll.getPositionFromString("P");
+
+//         if (position != -1 && position < dll.getSize() && dll.getDataFromPosition(position + 1).begin()->second == "X") {
+//             dll.setNodeAt(position + 1, {{position + 1, "P"}});
+//             dll.setNodeAt(position, {{position, "X"}});
+//         }
+//     } else if (choice == 2) {
+//         int position = dll.getPositionFromString("P");
+
+//         if (position != -1 && position > 1 && dll.getDataFromPosition(position - 1).begin()->second == "X") {
+//             dll.setNodeAt(position - 1, {{position - 1, "P"}});
+//             dll.setNodeAt(position, {{position, "X"}});
+//         }
+//     } else if (choice == 3) {
+//         for (int i = dll.getSize(); i >= 1; --i) {
+//             if (dll.getDataFromPosition(i).begin()->second == "E1" || dll.getDataFromPosition(i).begin()->second == "E2") {
+//                 if (i < dll.getSize() && dll.getDataFromPosition(i + 1).begin()->second == "X") {
+//                     dll.setNodeAt(i + 1, {{i + 1, dll.getDataFromPosition(i).begin()->second}});
+//                     dll.setNodeAt(i, {{i, "X"}});
+//                 }
+//             }
+//         }
+//     } else if (choice == 4) {
+//         for (int i = 1; i <= dll.getSize(); ++i) {
+//             if (dll.getDataFromPosition(i).begin()->second == "E1" || dll.getDataFromPosition(i).begin()->second == "E2") {
+//                 if (i > 1 && dll.getDataFromPosition(i - 1).begin()->second == "X") {
+//                     dll.setNodeAt(i - 1, {{i - 1, dll.getDataFromPosition(i).begin()->second}});
+//                     dll.setNodeAt(i, {{i, "X"}});
+//                 }
+//             }
+//         }
+//     }
+
+//     dll.printForward();
+
+//     }

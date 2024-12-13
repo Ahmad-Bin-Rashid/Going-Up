@@ -1,3 +1,6 @@
+#ifndef DOUBLY_LINKED_LIST_H
+#define DOUBLY_LINKED_LIST_H
+
 template <typename T>
 class DoublyLinkedList {
 private:
@@ -6,7 +9,8 @@ private:
         std::shared_ptr<Node> next;
         std::weak_ptr<Node> prev;
 
-        Node(const T& value) : data(value), next(nullptr), prev() {}
+        Node(const T& value, std::shared_ptr<Node> prevNode = nullptr) 
+            : data(value), prev(prevNode) {}
     };
 
     std::shared_ptr<Node> head;
@@ -29,20 +33,19 @@ public:
     }
 
     void pushFront(const T& value) {
-        auto newNode = std::make_shared<Node>(value);
-        newNode->next = head;
+        auto newNode = std::make_shared<Node>(value, nullptr);
         if (head) {
             head->prev = newNode;
         } else {
             tail = newNode;
         }
+        newNode->next = head;
         head = newNode;
         ++size;
     }
 
     void pushBack(const T& value) {
-        auto newNode = std::make_shared<Node>(value);
-        newNode->prev = tail;
+        auto newNode = std::make_shared<Node>(value, tail);
         if (tail) {
             tail->next = newNode;
         } else {
@@ -100,33 +103,57 @@ public:
 
     void printForward() const {
         for (auto current = head; current != nullptr; current = current->next) {
-            std::cout << current->data << " ";
+            // Access and print each key-value pair
+            for (const auto& pair : current->data) {
+                std::cout << pair.first << ": " << pair.second << " ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
     }
 
-    void printBackward() const {
-        for (auto current = tail; current != nullptr; current = current->prev.lock()) {
-            std::cout << current->data << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    std::shared_ptr<Node> getFirstNode() const {
-        return head;
-    }
-
-    std::shared_ptr<Node> getNextNode(const std::shared_ptr<Node>& node) const {
-        if (node) {
-            return node->next;
+    std::shared_ptr<Node> getNodeFromString(const std::string& value) {
+        for (auto current = head; current != nullptr; current = current->next) {
+            for (const auto& pair : current->data) {
+                if (pair.second == value) {
+                    return current;
+                }
+            }
         }
         return nullptr;
     }
 
-    std::shared_ptr<Node> getPrevNode(const std::shared_ptr<Node>& node) const {
-        if (node) {
-            return node->prev.lock();
+    std::shared_ptr<Node> getNodeFromPosition(int position) const {
+        if (position < 1 || position > size) {
+            throw std::out_of_range("Position out of range");
         }
-        return nullptr;
+        auto current = head;
+        for (int i = 1; i < position; ++i) {
+            current = current->next;
+        }
+        return current;
+    }
+
+    void setNodeAt(int position, const T& value) {
+        auto current = getNodeFromPosition(position);
+        current->data = value;
+    }
+
+    int getPositionFromString(const std::string& value) {
+        int position = 1;
+        for (auto current = head; current != nullptr; current = current->next, ++position) {
+            for (const auto& pair : current->data) {
+                if (pair.second == value) {
+                    return position;
+                }
+            }
+        }
+        return -1; // Return -1 if the value is not found
+    }
+
+    T getDataFromPosition(int position) {
+        auto node = getNodeFromPosition(position);
+        return node->data;
     }
 };
+
+#endif

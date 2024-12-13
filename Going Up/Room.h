@@ -3,15 +3,7 @@
 
 #include <vector>
 #include <iostream>
-
-enum class RoomType 
-{
-    Spawn,
-    Treasure,
-    Trap,
-    Large,
-    Boss
-};
+#include "Enums.h"
 
 struct Room {
     int roomNumber;
