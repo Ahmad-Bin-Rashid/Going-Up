@@ -9,6 +9,7 @@
 #include "Utility.h"
 #include "Room.h"
 #include "Queue.h"
+#include <string>
 
 #define MAX_MAP_X 50
 #define MAX_MAP_Y 30
@@ -212,6 +213,8 @@ public:
         GenerateMap(minRooms, maxRooms);
     }
 
+    const std::vector<Room>& getRooms() const { return rooms; }
+
     void GenerateMap(int minRooms, int maxRooms) {
         srand(time(nullptr));
         int roomCount = rand() % (maxRooms - minRooms + 1) + minRooms;
@@ -367,6 +370,15 @@ public:
         throw std::runtime_error("Spawn room not found");
     }
 
+    Room getRoomByPosition(std::pair<int, int> position) const {
+        for (const auto& room : rooms) {
+            if (room.position == position) {
+                return room;
+            }
+        }
+        throw std::runtime_error("Room not found");
+    }
+
     void DrawMap() const {
         drawConnections();
         for (const auto& room : rooms) {
@@ -404,8 +416,7 @@ public:
 
         while (true) {
             SetCursorAtXY(x1, y1);
-            std::cout << '.';
-
+            std::cout << '.';  
             if (x1 == x2 && y1 == y2) break;
             int e2 = 2 * err;
             if (e2 > -dy) {
@@ -418,7 +429,7 @@ public:
             }
         }
     }
-
+    
     void printMapAndConnections() {
         for (const auto& room : rooms) {
             std::cout << room << " Connected Rooms: ";
@@ -429,6 +440,26 @@ public:
         }
     }
 };
+
+std::string roomTypeToString(RoomType roomType) {
+    switch (roomType) {
+        case RoomType::Spawn: return "Spawn";
+        case RoomType::Boss: return "Boss";
+        case RoomType::Trap: return "Trap";
+        case RoomType::Large: return "Large";
+        case RoomType::Treasure: return "Treasure";
+        default: return "Unknown";
+    }
+}
+
+RoomType stringToRoomType(const std::string& type) {
+    if (type == "Spawn") return RoomType::Spawn;
+    if (type == "Boss") return RoomType::Boss;
+    if (type == "Trap") return RoomType::Trap;
+    if (type == "Large") return RoomType::Large;
+    if (type == "Treasure") return RoomType::Treasure;
+    return RoomType::Spawn;
+}
 
 class GameLogic {
 private:
@@ -447,23 +478,45 @@ public:
     void MainLoop() {
         system("cls");
         floor.DrawMap();
-        player.SetCurrentRoom(floor.getSpawnRoom());
+        std::vector<Room> rooms = floor.getRooms();
 
-
+        SetCursorAtXY(0, MAX_MAP_Y + 1);
         while (player.isAlive() && enemy.isAlive()) {
-            system("cls");
-            floor.DrawMap();
+            std::cout << "Current Room: " << currentRoom << std::endl;
+            std::cout << "Player: ";
             player.printStatus();
+            std::cout << "Enemy: ";
             enemy.printStatus();
 
-            for (int i = 0; i < currentRoom.connectedRooms.size(); i++) {
-                std::cout << i << ". " << currentRoom.connectedRooms[i] << std::endl;
+            std::cout << "Connected Rooms Type: ";
+            int count = 0;
+            for (int connectedRoomNumber : currentRoom.connectedRooms) {
+                std::cout << count << ". ";
+                std::cout << roomTypeToString(rooms[connectedRoomNumber].roomType) << std::endl;
+                count++;
             }
 
+            std::cout << "Select a room to move to: ";
             int choice;
             std::cin >> choice;
+
+            if (choice < 0 || choice >= currentRoom.connectedRooms.size()) {
+                std::cout << "Invalid choice!" << std::endl;
+                continue;
+            }
+
+            int nextRoomNumber = currentRoom.connectedRooms[choice];
+            currentRoom = rooms[nextRoomNumber];
+
+            if (currentRoom.roomType == RoomType::Large) {
+                LargeRoom largeRoom(currentRoom);
+                largeRoom.spawnEnemies();
+            } else if (currentRoom.roomType == RoomType::Treasure) {
+                TreasureRoom treasureRoom(currentRoom);
+                treasureRoom.openTreasure();
+            }
+        }        
             
-        }
     }
 };
 
