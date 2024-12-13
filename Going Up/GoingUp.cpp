@@ -5,11 +5,10 @@
 #include <memory>
 #include <cmath>
 #include <ctime>
-#include "Map.h"
+#include <variant>
 #include "Utility.h"
 #include "Room.h"
-#include "Player.h"
-#include "Enemy.h"
+#include "Queue.h"
 
 #define MAX_MAP_X 50
 #define MAX_MAP_Y 30
