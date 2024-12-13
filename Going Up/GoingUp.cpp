@@ -12,6 +12,7 @@
 #include <string>
 #include "Enums.h"
 #include "DoublyLinkedList.h"
+#include <unordered_map>
 
 #define MAX_MAP_X 50
 #define MAX_MAP_Y 30
@@ -461,25 +462,6 @@ public:
     }
 };
 
-std::string roomTypeToString(RoomType roomType) {
-    switch (roomType) {
-        case RoomType::Spawn: return "Spawn";
-        case RoomType::Boss: return "Boss";
-        case RoomType::Trap: return "Trap";
-        case RoomType::Large: return "Large";
-        case RoomType::Treasure: return "Treasure";
-        default: return "Unknown";
-    }
-}
-
-RoomType stringToRoomType(const std::string& type) {
-    if (type == "Spawn") return RoomType::Spawn;
-    if (type == "Boss") return RoomType::Boss;
-    if (type == "Trap") return RoomType::Trap;
-    if (type == "Large") return RoomType::Large;
-    if (type == "Treasure") return RoomType::Treasure;
-    return RoomType::Spawn;
-}
 
 class LargeRoom {
     private:
@@ -504,6 +486,8 @@ class LargeRoom {
                 isCleared = true;
             }
         }
+
+        virtual ~LargeRoom() = default;
 };
 
 class TreasureRoom {
@@ -519,6 +503,8 @@ class TreasureRoom {
             std::cout << "You found a treasure!" << std::endl;
             isCleared = true;
         }
+
+        virtual ~TreasureRoom() = default;
 };
 
 class TrapRoom {
@@ -533,7 +519,12 @@ class TrapRoom {
             std::cout << "You triggered a trap!" << std::endl;
             isCleared = true;
         }
+
+        virtual ~TrapRoom() = default;
 };
+
+
+using RoomVariant = std::variant<std::unique_ptr<LargeRoom>, std::unique_ptr<TreasureRoom>, std::unique_ptr<TrapRoom>>;
 
 class GameLogic {
 private:
@@ -542,6 +533,7 @@ private:
     Player player;
     Enemy enemy;
     std::set<int> visitedRooms; // Set to keep track of visited rooms
+    std::unordered_map<Room, RoomVariant, RoomHash> map;
     
 public:
     GameLogic(int floorNumber, int minRooms, int maxRooms) 
@@ -556,6 +548,29 @@ public:
         system("cls");
         floor.DrawMap(visitedRooms); // Pass visited rooms to DrawMap
         std::vector<Room> rooms = floor.getRooms();
+
+        for (const auto& room : rooms) {
+            switch (room.roomType) {
+                case RoomType::Large: {
+                    map[room] = std::make_unique<LargeRoom>(room);
+                    break;
+                }
+                case RoomType::Treasure: {
+                    map[room] = std::make_unique<TreasureRoom>(room);
+                    break;
+                }
+                case RoomType::Trap: {
+                    map[room] = std::make_unique<TrapRoom>(room);
+                    break;
+                }
+                case RoomType::Spawn: {
+                    break;
+                }
+                case RoomType::Boss: {
+                    break;
+                }
+            }
+        }
 
         while (player.isAlive() && enemy.isAlive()) {
             SetCursorAtXY(0, MAX_MAP_Y + 1);
@@ -590,12 +605,17 @@ public:
             currentRoom = rooms[nextRoomNumber];
             visitedRooms.insert(currentRoom.roomNumber); // Mark the new room as visited
 
-            if (currentRoom.roomType == RoomType::Large) {
-                LargeRoom largeRoom(currentRoom);
-                largeRoom.spawnEnemies();
-            } else if (currentRoom.roomType == RoomType::Treasure) {
-                TreasureRoom treasureRoom(currentRoom);
-                treasureRoom.openTreasure();
+            auto it = map.find(currentRoom);
+            if (it != map.end()) {
+                std::visit([&](auto& roomPtr) {
+                    if (auto largeRoom = dynamic_cast<LargeRoom*>(roomPtr.get())) {
+                        largeRoom->enterRoom(player);
+                    } else if (auto treasureRoom = dynamic_cast<TreasureRoom*>(roomPtr.get())) {
+                        treasureRoom->openTreasure();
+                    } else if (auto trapRoom = dynamic_cast<TrapRoom*>(roomPtr.get())) {
+                        trapRoom->triggerTrap();
+                    }
+                }, it->second);
             }
 
             system("cls");

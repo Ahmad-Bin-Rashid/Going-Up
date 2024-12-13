@@ -44,11 +44,7 @@ struct Room {
 
 struct RoomHash {
     std::size_t operator()(const Room& room) const {
-        std::size_t h1 = std::hash<int>{}(room.roomNumber);
-        std::size_t h2 = std::hash<int>{}(static_cast<int>(room.roomType));
-        std::size_t h3 = std::hash<int>{}(room.position.first);
-        std::size_t h4 = std::hash<int>{}(room.position.second);
-        return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
+        return std::hash<int>()(room.roomNumber);
     }
 };
 
