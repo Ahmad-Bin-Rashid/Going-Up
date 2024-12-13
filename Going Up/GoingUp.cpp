@@ -193,7 +193,7 @@ public:
 
     void start() {
         while (player.isAlive() && enemy.isAlive()) {
-            DoubleSlash doubleSlash;  // This line creates a new `DoubleSlash` object each time
+            DoubleSlash doubleSlash;
             playerTurn(doubleSlash); 
             player.printStatus();
             enemy.printStatus();
