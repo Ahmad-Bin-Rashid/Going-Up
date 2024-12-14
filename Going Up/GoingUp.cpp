@@ -257,8 +257,6 @@ public:
     }
 
     void connectRooms() {
-
-        // Continue with normal connection logic
         for (auto& room : rooms) {
             int minConnections = (room.roomType == RoomType::Spawn || room.roomType == RoomType::Boss) ? 1 : 2;
             int maxConnections = (room.roomType == RoomType::Spawn || room.roomType == RoomType::Boss) ? 1 : 3;
@@ -294,11 +292,18 @@ public:
 
         // Ensure graph connectivity
         ensureGraphConnectivity();
+
+        // Debugging output
+        for (const auto& room : rooms) {
+            std::cout << "Room " << room.roomNumber << " connections: ";
+            for (const auto& connectedRoom : room.connectedRooms) {
+                std::cout << connectedRoom << " ";
+            }
+            std::cout << std::endl;
+        }
     }
 
-
     void ensureGraphConnectivity() {
-
         // Track visited rooms
         std::vector<bool> visited(rooms.size(), false);
         Queue toVisit;
@@ -339,10 +344,19 @@ public:
                 // Connect the unvisited room to the nearest visited room
                 if (nearestVisited != -1) {
                     rooms[i].connectedRooms.push_back(nearestVisited);
-                    rooms[nearestVisited].connectedRooms.push_back(i);
+                    rooms[nearestVisited].connectedRooms.push_back(i); // Bidirectional connection
                     visited[i] = true; // Mark as visited after connection
                 }
             }
+        }
+
+        // Debugging output
+        for (const auto& room : rooms) {
+            std::cout << "Room " << room.roomNumber << " connections: ";
+            for (const auto& connectedRoom : room.connectedRooms) {
+                std::cout << connectedRoom << " ";
+            }
+            std::cout << std::endl;
         }
     }
 
@@ -463,64 +477,62 @@ public:
 };
 
 
-class LargeRoom {
-    private:
-        Room room;
-        std::vector<Enemy> enemies;
-        bool isCleared;
-    
-    public:
-        LargeRoom(Room room) : room(room), isCleared(false) {}
-
-        void spawnEnemies() {
-            std::cout << "Enemies have appeared!" << std::endl;
-            enemies.push_back(Enemy(room));
-            enemies.push_back(Enemy(room));
-            enemies.push_back(Enemy(room));
-        };
-
-        void enterRoom(Player& player) {
-            if (!isCleared) {
-                Combat combat(player, enemies);
-                combat.start();
-                isCleared = true;
-            }
-        }
-
-        virtual ~LargeRoom() = default;
+class RoomBase {
+public:
+    bool isCleared = false;
+    virtual ~RoomBase() = default;
+    virtual void enterRoom(Player& player) = 0;
 };
 
-class TreasureRoom {
-    private:
-        Room room;
-        std::vector<CardVariant> cards;
-        bool isCleared;
-    
-    public:
-        TreasureRoom(Room room) : room(room), isCleared(false) {}
-
-        void openTreasure() {
-            std::cout << "You found a treasure!" << std::endl;
-            isCleared = true;
+class LargeRoom : public RoomBase {
+private:
+    Room room;
+public:
+    LargeRoom(const Room& room) : room(room) {}
+    void enterRoom(Player& player) override {
+        if (isCleared) {
+            std::cout << "You have already cleared this room!" << std::endl;
+            Sleep(2000);
+            return;
         }
-
-        virtual ~TreasureRoom() = default;
+        std::cout << "You have entered a Large room at " << room.position.first << ", " << room.position.second << std::endl;
+        Sleep(2000);
+        isCleared = true;
+    }
 };
 
-class TrapRoom {
-    private:
-        Room room;
-        bool isCleared;
-
-    public:
-        TrapRoom(Room room) : room(room), isCleared(false) {}
-
-        void triggerTrap() {
-            std::cout << "You triggered a trap!" << std::endl;
-            isCleared = true;
+class TreasureRoom : public RoomBase {
+private:
+    Room room;
+public:
+    TreasureRoom(const Room& room) : room(room) {}
+    void enterRoom(Player& player) override {
+        if (isCleared) {
+            std::cout << "You have already cleared this room!" << std::endl;
+            Sleep(2000);
+            return;
         }
+        std::cout << "You have entered a Treasure room at " << room.position.first << ", " << room.position.second << std::endl;
+        Sleep(2000);
+        isCleared = true;
+    }
+};
 
-        virtual ~TrapRoom() = default;
+class TrapRoom : public RoomBase {
+private:
+    Room room;
+public:
+    TrapRoom(const Room& room) : room(room) {}
+    void enterRoom(Player& player) override {
+        if (isCleared) {
+            std::cout << "You have already cleared this room!" << std::endl;
+            Sleep(2000);
+            return;
+        }
+        std::cout << "You have entered a trap room at " << room.position.first << ", " << room.position.second << std::endl;
+        Sleep(2000);
+        isCleared = true;
+    }
 };
 
 
@@ -605,16 +617,17 @@ public:
             currentRoom = rooms[nextRoomNumber];
             visitedRooms.insert(currentRoom.roomNumber); // Mark the new room as visited
 
+            // Debugging output
+            std::cout << "Visited Rooms: ";
+            for (const auto& roomNumber : visitedRooms) {
+                std::cout << roomNumber << " ";
+            }
+            std::cout << std::endl;
+
             auto it = map.find(currentRoom);
             if (it != map.end()) {
                 std::visit([&](auto& roomPtr) {
-                    if (auto largeRoom = dynamic_cast<LargeRoom*>(roomPtr.get())) {
-                        largeRoom->enterRoom(player);
-                    } else if (auto treasureRoom = dynamic_cast<TreasureRoom*>(roomPtr.get())) {
-                        treasureRoom->openTreasure();
-                    } else if (auto trapRoom = dynamic_cast<TrapRoom*>(roomPtr.get())) {
-                        trapRoom->triggerTrap();
-                    }
+                    roomPtr->enterRoom(player);
                 }, it->second);
             }
 
@@ -622,13 +635,15 @@ public:
             floor.DrawMap(visitedRooms); // Redraw the map with updated visited rooms
         }        
     }
+
+    ~GameLogic() = default;
 };
 
 
 
 std::set<std::pair<int, int>> Floor::occupiedPositions;
 int main() {
-    GameLogic game(1, 5, 10);
+    GameLogic game(1, 10, 15);
     game.MainLoop();
     return 0;
 }
