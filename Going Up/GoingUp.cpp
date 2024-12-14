@@ -108,6 +108,15 @@ public:
         return cards;
     }
 
+    CharacterDirection getDirection() const {
+        return direction;
+    }
+
+    bool ChangeDirection() {
+        direction = (direction == CharacterDirection::Right) ? CharacterDirection::Left : CharacterDirection::Right;
+        return true;
+    }
+
     virtual ~Character() = default;
 };
 
@@ -198,7 +207,7 @@ public:
 
 class Goblin : public Enemy {
 public:
-    Goblin() : Enemy(2, 2) {
+    Goblin() : Enemy(4, 4) {
         addCard(DoubleSlash());
     }
 
@@ -207,7 +216,7 @@ public:
 
 class SkeletonWarrior : public Enemy {
 public:
-    SkeletonWarrior() : Enemy(3, 3) {
+    SkeletonWarrior() : Enemy(5, 5) {
         addCard(SingleSlash());
     }
 
@@ -216,7 +225,7 @@ public:
 
 class CaveSpider : public Enemy {
 public:
-    CaveSpider() : Enemy(1, 1) {
+    CaveSpider() : Enemy(3, 3) {
         addCard(DoubleSlash());
     }
 
@@ -225,7 +234,7 @@ public:
 
 class FireImp : public Enemy {
 public:
-    FireImp() : Enemy(2, 2) {
+    FireImp() : Enemy(4, 4) {
         addCard(Bow());
     }
 
@@ -253,47 +262,56 @@ private:
 
 public:
     DoublyLinkedList<std::unordered_map<int, std::string>> dll;
-    Combat(Player& player, EnemyVariant& enemy) : player(player), enemy(enemy) {}
+    Combat(Player& player, EnemyVariant& enemy) 
+        : player(player), 
+          enemy(enemy) 
+    {
+        initializeCombat();
+    }
+
+    void initializeCombat() {
+        std::visit([](auto& e) { e.addCard(DoubleSlash()); }, enemy);
+        std::visit([](auto& e) { e.addCard(SingleSlash()); }, enemy);
+        std::visit([](auto& e) { e.addCard(Bow()); }, enemy);
+        makeFloor();
+        startCombat(dll);
+    }
 
     void makeFloor() {
-        // Add some empty tiles
-        for (int i = 1; i <= 3; ++i) {
-            dll.pushBack({{i, "X"}});
-        }
 
         // Add the player
-        dll.pushBack({{4, "P"}});
+        dll.pushBack({{1, "P"}});
 
         // Add some more empty tiles
-        for (int i = 5; i <= 7; ++i) {
+        for (int i = 2; i <= 4; ++i) {
             dll.pushBack({{i, "X"}});
         }
 
         // Add the enemy
-        dll.pushBack({{8, "E"}});
+        dll.pushBack({{5, "E"}});
 
         // Add some more empty tiles
-        for (int i = 9; i <= 11; ++i) {
+        for (int i = 6; i <= 9; ++i) {
             dll.pushBack({{i, "X"}});
         }
-
-        // Print the initial floor layout
-        printTiles(dll);
-
-        Sleep(2000);
-
-        // Start the combat
-        startCombat(dll);
     }
 
     void startCombat(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        std::unordered_map<std::string, int> cooldowns;
+
         while (true) {
             printTiles(dll);
+            player.printStatus();
+            std::visit([](auto& e) { e.printStatus(); }, enemy);
+            std::cout << "Player Direction: " << (player.getDirection() == CharacterDirection::Right ? "Right" : "Left") << std::endl;
+            std::cout << "Enemy Direction: " << (std::visit([](auto& e) { return e.getDirection(); }, enemy) == CharacterDirection::Right ? "Right" : "Left") << std::endl;
+
             int choice;
             std::cout << "Enemy's turn: " << std::endl;
             std::cout << "1. Move Forward" << std::endl;
             std::cout << "2. Move Backward" << std::endl;
             std::cout << "3. Attack" << std::endl;
+            std::cout << "4. Change Direction" << std::endl;
             std::cin >> choice;
 
             if (choice == 1) {
@@ -301,7 +319,26 @@ public:
             } else if (choice == 2) {
                 moveEnemyBackward(dll);
             } else if (choice == 3) {
-                attack(dll);
+                std::visit([&](auto& enemyCharacter) {
+                    for (auto& attackCard : enemyCharacter.getCards()) {
+                        std::visit([&](auto& card) {
+                            if (cooldowns[card.getName()] == 0) {
+                                card.use(player);
+                                cooldowns[card.getName()] = 3; // Set cooldown to 3 turns
+                            }
+                        }, attackCard);
+                    }
+                }, enemy);
+
+                if (!player.isAlive()) {
+                    std::cout << "Player defeated!" << std::endl;
+                    Sleep(2000);
+                    break;
+                }
+            } else if (choice == 4) {
+                std::visit([](auto& e) {
+                    e.ChangeDirection();
+                }, enemy);
             }
 
             if (!player.isAlive()) {
@@ -311,10 +348,16 @@ public:
             }
 
             printTiles(dll);
+            player.printStatus();
+            std::visit([](auto& e) { e.printStatus(); }, enemy);
+            std::cout << "Player Direction: " << (player.getDirection() == CharacterDirection::Right ? "Right" : "Left") << std::endl;
+            std::cout << "Enemy Direction: " << (std::visit([](auto& e) { return e.getDirection(); }, enemy) == CharacterDirection::Right ? "Right" : "Left") << std::endl;
+
             std::cout << "Player's turn: " << std::endl;
             std::cout << "1. Move Forward" << std::endl;
             std::cout << "2. Move Backward" << std::endl;
             std::cout << "3. Use Card" << std::endl;
+            std::cout << "4. Change Direction" << std::endl;
             std::cin >> choice;
 
             if (choice == 1) {
@@ -334,6 +377,79 @@ public:
                     std::cout << "Invalid choice!" << std::endl;
                     continue;
                 }
+
+                std::visit([&](auto& card) {
+                    if (cooldowns[card.getName()] == 0) {
+                        std::visit([&](auto& enemyCharacter) {
+                            card.use(enemyCharacter);
+                            enemyCharacter.printStatus();
+                        }, enemy);
+                        cooldowns[card.getName()] = 3; // Set cooldown to 3 turns
+                    } else {
+                        std::cout << "Card is on cooldown!" << std::endl;
+                    }
+                }, cards[choice]);
+
+                player.removeCard(cards[choice]);
+
+                if (!std::holds_alternative<DoubleSlash>(cards[choice])) {
+                    player.addCardToAttackStack(cards[choice]);
+                }
+
+                if (!std::holds_alternative<DoubleSlash>(cards[choice])) {
+                    player.removeCardFromAttackStack();
+                }
+
+                if (!std::holds_alternative<DoubleSlash>(cards[choice])) {
+                    std::visit([&](auto& card) {
+                        std::visit([&](auto& attackCard) {
+                            attackCard.use(player);
+                        }, cards[choice]);
+                    }, enemy);
+                }
+
+                if (!std::visit([](auto& e) { return e.isAlive(); }, enemy)) {
+                    std::cout << "Enemy defeated!" << std::endl;
+                    Sleep(2000);
+                    break;
+                }
+
+                if (!player.isAlive()) {
+                    std::cout << "Player defeated!" << std::endl;
+                    Sleep(2000);
+                    break;
+                }
+            } else if (choice == 4) {
+                player.ChangeDirection();
+            }
+
+            // Decrease cooldowns
+            for (auto& [cardName, cooldown] : cooldowns) {
+                if (cooldown > 0) {
+                    cooldown--;
+                }
+            }
+
+            // Check if the player and enemy are next to each other
+            int playerPos = dll.getPositionFromString("P");
+            int enemyPos = dll.getPositionFromString("E");
+            if (std::abs(playerPos - enemyPos) == 1) {
+                std::cout << "Player and enemy are next to each other!" << std::endl;
+                // Apply damage logic here
+                if (choice == 1 && playerPos < enemyPos) {
+                    std::cout << "Player attacks enemy!" << std::endl;
+                    // Apply player attack logic here
+                } else if (choice == 2 && playerPos > enemyPos) {
+                    std::cout << "Player attacks enemy!" << std::endl;
+                    // Apply player attack logic here
+                } else if (choice == 1 && playerPos > enemyPos) {
+                    std::cout << "Enemy attacks player!" << std::endl;
+                    // Apply enemy attack logic here
+                } else if (choice == 2 && playerPos < enemyPos) {
+                    std::cout << "Enemy attacks player!" << std::endl;
+                    // Apply enemy attack logic here
+                }
+                Sleep(2000);
             }
         }
     }
@@ -367,14 +483,6 @@ public:
         if (position != -1 && position > 1 && dll.getDataFromPosition(position - 1).begin()->second == "X") {
             dll.setNodeAt(position - 1, {{position - 1, "E"}});
             dll.setNodeAt(position, {{position, "X"}});
-        }
-    }
-
-    void attack(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
-        int playerPos = dll.getPositionFromString("P");
-        int enemyPos = dll.getPositionFromString("E");
-        if (std::abs(playerPos - enemyPos) == 1) {
-            std::cout << "Player attacked by enemy!" << std::endl;
         }
     }
 
@@ -675,11 +783,7 @@ private:
 public:
     LargeRoom(const Room& room, Player& player)
         : room(room), enemy(generateRandomEnemy()), combat(player, enemy) 
-        {
-            system("cls");
-            std::cout << "Enemy type: " << enemy.index() << std::endl;
-            Sleep(2000);
-        }
+        {}
 
     void enterRoom(Player& player) override {
         if (isCleared) {
