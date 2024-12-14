@@ -5,14 +5,15 @@
 #include <memory>
 #include <cmath>
 #include <ctime>
+#include <string>
 #include <variant>
+#include <unordered_map>
 #include "Utility.h"
 #include "Room.h"
-#include "Queue.h"
-#include <string>
 #include "Enums.h"
 #include "DoublyLinkedList.h"
-#include <unordered_map>
+#include "Stack.h"
+#include "Queue.h"
 
 #define MAX_MAP_X 50
 #define MAX_MAP_Y 30
@@ -54,19 +55,19 @@ public:
     void use(Character& character);
 };
 
-using CardVariant = std::variant<DoubleSlash, Bow>;
+using CardVariant = std::variant<DoubleSlash, Bow, SingleSlash>;
 
 class Character {
 protected:
     int health;
     int maxHealth;
-    Room currentRoom;
     CharacterDirection direction;
     std::vector<CardVariant> cards;
+    Stack<CardVariant> attackCardsStack;
 
 public:
-    Character(int health, int maxHealth, Room currentRoom)
-        : health(health), maxHealth(maxHealth), currentRoom(currentRoom), direction(CharacterDirection::Right) {}
+    Character(int health, int maxHealth)
+        : health(health), maxHealth(maxHealth), direction(CharacterDirection::Right) {}
 
     virtual void takeDamage(int damage) {
         health -= damage;
@@ -87,10 +88,6 @@ public:
         return health > 0;
     }
 
-    void SetCurrentRoom(Room room) {
-        currentRoom = room;
-    }
-
     void addCard(const CardVariant& card) {
         cards.push_back(card);
     }
@@ -99,10 +96,12 @@ public:
         cards.erase(std::remove(cards.begin(), cards.end(), card), cards.end());
     }
 
-    void useCard(size_t index, Character& target) {
-        if (index < cards.size()) {
-            std::visit([&target](auto& card) { card.use(target); }, cards[index]);
-        }
+    void addCardToAttackStack(const CardVariant& card) {
+        attackCardsStack.push(card);
+    }
+
+    void removeCardFromAttackStack() {
+        attackCardsStack.pop();
     }
 
     std::vector<CardVariant> getCards() const {
@@ -114,7 +113,7 @@ public:
 
 class Player : public Character {
 public:
-    Player(Room currentRoom) : Character(100, 100, currentRoom) {}
+    Player() : Character(100, 100) {}
 
     void takeDamage(int damage) override {
         health -= damage;
@@ -137,9 +136,47 @@ public:
     ~Player() = default;
 };
 
+// Example enemies:-
+
+// 1. Goblin Scout
+// HP: 2
+// Attack Cards:
+// Double Slash
+// Behaviour
+// If card not on cooldown && player not in neighboring tiles : move towards player
+// If card on cooldown && player not in neighboring tiles: wait /pass turn
+// If card on cooldown && player  in neighboring tiles : move away from player
+// If card not cooldown && player in neighboring tiles && stack empty : put card in stack
+// If card not cooldown && player in neighboring tiles && stack not empty : empty stack and attack
+// 2. Skeleton Warrior
+// HP: 3
+// Attack Cards:
+// Single Sword Strike
+// Behaviour
+// If card not on cooldown && player not in neighboring tiles && stack empty : put card in stack
+// If card on cooldown && player not in neighboring tiles && stack empty: wait /pass turn
+// If card on cooldown && player  in neighboring tiles : move away from player
+// If card not cooldown && player in neighboring tiles && stack empty : put card in stack
+// If card not cooldown && player in neighboring tiles && stack not empty : empty stack and attack
+
+// 3. Cave Spider
+// HP: 1
+// Attack Cards:
+// Dash.
+// If card not on cooldown && path to player clear && stack empty : put card in stack
+// If card on cooldown && path to player not clear && stack empty: wait /pass turn
+// If card on cooldown && player  in neighboring tiles : move away from player
+// If card not cooldown && player in neighboring tiles && stack empty : put card in stack
+// If card not cooldown && player in neighboring tiles && stack not empty : empty stack and attack
+// 4. Fire Imp
+// HP: 2
+// Attack Cards:
+// Bow
+
+
 class Enemy : public Character {
 public:
-    Enemy(Room currentRoom) : Character(20, 20, currentRoom) {}
+    Enemy(int HP, int maxHP) : Character(HP, maxHP) {}
 
     void takeDamage(int damage) override {
         health -= damage;
@@ -153,11 +190,49 @@ public:
     }
 
     bool operator==(const Enemy& other) const {
-        return health == other.health && maxHealth == other.maxHealth && currentRoom == other.currentRoom;
+        return health == other.health && maxHealth == other.maxHealth;
     }
 
     ~Enemy() = default;
 };
+
+class Goblin : public Enemy {
+public:
+    Goblin() : Enemy(2, 2) {
+        addCard(DoubleSlash());
+    }
+
+    ~Goblin() = default;
+};
+
+class SkeletonWarrior : public Enemy {
+public:
+    SkeletonWarrior() : Enemy(3, 3) {
+        addCard(SingleSlash());
+    }
+
+    ~SkeletonWarrior() = default;
+};
+
+class CaveSpider : public Enemy {
+public:
+    CaveSpider() : Enemy(1, 1) {
+        addCard(DoubleSlash());
+    }
+
+    ~CaveSpider() = default;
+};
+
+class FireImp : public Enemy {
+public:
+    FireImp() : Enemy(2, 2) {
+        addCard(Bow());
+    }
+
+    ~FireImp() = default;
+};
+
+using EnemyVariant = std::variant<Goblin, SkeletonWarrior, CaveSpider, FireImp>;
 
 void SingleSlash::use(Character& character) {
     character.takeDamage(damage);
@@ -174,14 +249,13 @@ void Bow::use(Character& character) {
 class Combat {
 private:
     Player& player;
-    std::vector<Enemy> enemies;
+    EnemyVariant& enemy;
 
 public:
     DoublyLinkedList<std::unordered_map<int, std::string>> dll;
-    Combat(Player& player, std::vector<Enemy>& enemies) : player(player), enemies(enemies) {}
+    Combat(Player& player, EnemyVariant& enemy) : player(player), enemy(enemy) {}
 
     void makeFloor() {
-
         // Add some empty tiles
         for (int i = 1; i <= 3; ++i) {
             dll.pushBack({{i, "X"}});
@@ -195,14 +269,11 @@ public:
             dll.pushBack({{i, "X"}});
         }
 
-        // Add enemies with unique names
-        for (size_t i = 0; i < enemies.size(); ++i) {
-            std::string enemyName = "E" + std::to_string(i + 1);
-            dll.pushBack({{8 + static_cast<int>(i), enemyName}});
-        }
+        // Add the enemy
+        dll.pushBack({{8, "E"}});
 
         // Add some more empty tiles
-        for (int i = 8 + static_cast<int>(enemies.size()); i <= 10 + static_cast<int>(enemies.size()); ++i) {
+        for (int i = 9; i <= 11; ++i) {
             dll.pushBack({{i, "X"}});
         }
 
@@ -226,9 +297,9 @@ public:
             std::cin >> choice;
 
             if (choice == 1) {
-                moveEnemiesForward(dll);
+                moveEnemyForward(dll);
             } else if (choice == 2) {
-                moveEnemiesBackward(dll);
+                moveEnemyBackward(dll);
             } else if (choice == 3) {
                 attack(dll);
             }
@@ -263,18 +334,6 @@ public:
                     std::cout << "Invalid choice!" << std::endl;
                     continue;
                 }
-
-                for (auto& enemy : enemies) {
-                    player.useCard(choice, enemy);
-                    if (!enemy.isAlive()) {
-                        enemies.erase(std::remove(enemies.begin(), enemies.end(), enemy), enemies.end());
-                    }
-                }
-            }
-
-            if (enemies.empty()) {
-                std::cout << "All enemies defeated!" << std::endl;
-                break;
             }
         }
     }
@@ -295,36 +354,27 @@ public:
         }
     }
 
-    void moveEnemiesForward(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
-        for (int i = dll.getSize(); i >= 1; --i) {
-            if (dll.getDataFromPosition(i).begin()->second == "E1" || dll.getDataFromPosition(i).begin()->second == "E2") {
-                if (i < dll.getSize() && dll.getDataFromPosition(i + 1).begin()->second == "X") {
-                    dll.setNodeAt(i + 1, {{i + 1, dll.getDataFromPosition(i).begin()->second}});
-                    dll.setNodeAt(i, {{i, "X"}});
-                }
-            }
+    void moveEnemyForward(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        int position = dll.getPositionFromString("E");
+        if (position != -1 && position < dll.getSize() && dll.getDataFromPosition(position + 1).begin()->second == "X") {
+            dll.setNodeAt(position + 1, {{position + 1, "E"}});
+            dll.setNodeAt(position, {{position, "X"}});
         }
     }
 
-    void moveEnemiesBackward(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
-        for (int i = 1; i <= dll.getSize(); ++i) {
-            if (dll.getDataFromPosition(i).begin()->second == "E1" || dll.getDataFromPosition(i).begin()->second == "E2") {
-                if (i > 1 && dll.getDataFromPosition(i - 1).begin()->second == "X") {
-                    dll.setNodeAt(i - 1, {{i - 1, dll.getDataFromPosition(i).begin()->second}});
-                    dll.setNodeAt(i, {{i, "X"}});
-                }
-            }
+    void moveEnemyBackward(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        int position = dll.getPositionFromString("E");
+        if (position != -1 && position > 1 && dll.getDataFromPosition(position - 1).begin()->second == "X") {
+            dll.setNodeAt(position - 1, {{position - 1, "E"}});
+            dll.setNodeAt(position, {{position, "X"}});
         }
     }
 
     void attack(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
         int playerPos = dll.getPositionFromString("P");
-        for (int i = 1; i <= dll.getSize(); ++i) {
-            if ((dll.getDataFromPosition(i).begin()->second == "E1" || dll.getDataFromPosition(i).begin()->second == "E2") &&
-                (std::abs(playerPos - i) == 1)) {
-                dll.setNodeAt(i, {{i, "X"}});
-                std::cout << "Enemy at position " << i << " defeated!" << std::endl;
-            }
+        int enemyPos = dll.getPositionFromString("E");
+        if (std::abs(playerPos - enemyPos) == 1) {
+            std::cout << "Player attacked by enemy!" << std::endl;
         }
     }
 
@@ -609,20 +659,27 @@ class LargeRoom : public RoomBase {
 private:
     Room room;
     Combat combat;
-    std::vector<Enemy> enemies;
+    EnemyVariant enemy;
 
-    static std::vector<Enemy> createEnemies(const Room& room) {
-        srand(time(nullptr));
-        std::vector<Enemy> enemies;
-        // Create enemies based on room properties
-        enemies.push_back(Enemy(room));
-        enemies.push_back(Enemy(room));
-        return enemies;
+    EnemyVariant generateRandomEnemy() {
+        int randomIndex = rand() % 4;
+        switch (randomIndex) {
+            case 0: return EnemyVariant{std::in_place_type<Goblin>};
+            case 1: return EnemyVariant{std::in_place_type<SkeletonWarrior>};
+            case 2: return EnemyVariant{std::in_place_type<CaveSpider>};
+            case 3: return EnemyVariant{std::in_place_type<FireImp>};
+            default: return EnemyVariant{std::in_place_type<Goblin>};
+        }
     }
 
 public:
     LargeRoom(const Room& room, Player& player)
-        : room(room), enemies(createEnemies(room)), combat(player, enemies) {}
+        : room(room), enemy(generateRandomEnemy()), combat(player, enemy) 
+        {
+            system("cls");
+            std::cout << "Enemy type: " << enemy.index() << std::endl;
+            Sleep(2000);
+        }
 
     void enterRoom(Player& player) override {
         if (isCleared) {
@@ -704,15 +761,15 @@ private:
 
 public:
     GameLogic(int floorNumber, int minRooms, int maxRooms)
-        : floor(floorNumber, minRooms, maxRooms), currentRoom(floor.getRooms().front()), player(currentRoom) {
-        visitedRooms.insert(currentRoom.roomNumber); // Mark the spawn room as visited
+        : floor(floorNumber, minRooms, maxRooms), currentRoom(floor.getRooms().front()) {
+        player.addCard(DoubleSlash());
+        player.addCard(Bow());
+        visitedRooms.insert(currentRoom.roomNumber);
     }
 
     void MainLoop() {
         system("cls");
-        floor.DrawMap(visitedRooms); // Pass visited rooms to DrawMap
-        std::cout << "Welcome to the dungeon!" << std::endl;
-        Sleep(2000);
+        floor.DrawMap(visitedRooms);
         std::vector<Room> rooms = floor.getRooms();
 
         for (const auto& room : rooms) {

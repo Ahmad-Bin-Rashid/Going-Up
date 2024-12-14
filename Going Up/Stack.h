@@ -1,6 +1,7 @@
+#pragma once
+
 #include <memory>
 #include <stdexcept>
-#include <iostream>
 
 template <typename T>
 class Stack {
@@ -65,17 +66,3 @@ public:
         clear();
     }
 };
-
-
-int main() {
-    Stack<int> stack;
-    stack.push(1);
-    stack.push(2);
-    stack.push(3);
-
-    while (!stack.empty()) {
-        std::cout << stack.pop() << ' ';
-    }
-
-    return 0;
-}
