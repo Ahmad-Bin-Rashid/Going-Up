@@ -177,43 +177,159 @@ private:
     std::vector<Enemy> enemies;
 
 public:
+    DoublyLinkedList<std::unordered_map<int, std::string>> dll;
     Combat(Player& player, std::vector<Enemy>& enemies) : player(player), enemies(enemies) {}
 
-    void start() {
-        while (player.isAlive() && !enemies.empty()) {
-            player.printStatus();
-            for (auto& enemy : enemies) {
-                enemy.printStatus();
-            }
+    void makeFloor() {
 
+        // Add some empty tiles
+        for (int i = 1; i <= 3; ++i) {
+            dll.pushBack({{i, "X"}});
+        }
+
+        // Add the player
+        dll.pushBack({{4, "P"}});
+
+        // Add some more empty tiles
+        for (int i = 5; i <= 7; ++i) {
+            dll.pushBack({{i, "X"}});
+        }
+
+        // Add enemies with unique names
+        for (size_t i = 0; i < enemies.size(); ++i) {
+            std::string enemyName = "E" + std::to_string(i + 1);
+            dll.pushBack({{8 + static_cast<int>(i), enemyName}});
+        }
+
+        // Add some more empty tiles
+        for (int i = 8 + static_cast<int>(enemies.size()); i <= 10 + static_cast<int>(enemies.size()); ++i) {
+            dll.pushBack({{i, "X"}});
+        }
+
+        // Print the initial floor layout
+        printTiles(dll);
+
+        Sleep(2000);
+
+        // Start the combat
+        startCombat(dll);
+    }
+
+    void startCombat(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        while (true) {
+            printTiles(dll);
             int choice;
-            std::cout << "Select a card to use: " << std::endl;
-            std::vector<CardVariant> cards = player.getCards();
-            for (size_t i = 0; i < cards.size(); ++i) {
-                std::cout << i << ". ";
-                std::visit([](const auto& card) { std::cout << card.getName() << std::endl; }, cards[i]);
-            }
+            std::cout << "Enemy's turn: " << std::endl;
+            std::cout << "1. Move Forward" << std::endl;
+            std::cout << "2. Move Backward" << std::endl;
+            std::cout << "3. Attack" << std::endl;
             std::cin >> choice;
 
-            if (choice < 0 || choice >= cards.size()) {
-                std::cout << "Invalid choice!" << std::endl;
-                continue;
+            if (choice == 1) {
+                moveEnemiesForward(dll);
+            } else if (choice == 2) {
+                moveEnemiesBackward(dll);
+            } else if (choice == 3) {
+                attack(dll);
             }
 
-            for (auto& enemy : enemies) {
-                player.useCard(choice, enemy);
-                if (!enemy.isAlive()) {
-                    enemies.erase(std::remove(enemies.begin(), enemies.end(), enemy), enemies.end());
+            if (!player.isAlive()) {
+                std::cout << "Player defeated!" << std::endl;
+                Sleep(2000);
+                break;
+            }
+
+            printTiles(dll);
+            std::cout << "Player's turn: " << std::endl;
+            std::cout << "1. Move Forward" << std::endl;
+            std::cout << "2. Move Backward" << std::endl;
+            std::cout << "3. Use Card" << std::endl;
+            std::cin >> choice;
+
+            if (choice == 1) {
+                movePlayerForward(dll);
+            } else if (choice == 2) {
+                movePlayerBackward(dll);
+            } else if (choice == 3) {
+                std::cout << "Select a card to use: " << std::endl;
+                std::vector<CardVariant> cards = player.getCards();
+                for (size_t i = 0; i < cards.size(); ++i) {
+                    std::cout << i << ". ";
+                    std::visit([](const auto& card) { std::cout << card.getName() << std::endl; }, cards[i]);
+                }
+                std::cin >> choice;
+
+                if (choice < 0 || choice >= cards.size()) {
+                    std::cout << "Invalid choice!" << std::endl;
+                    continue;
+                }
+
+                for (auto& enemy : enemies) {
+                    player.useCard(choice, enemy);
+                    if (!enemy.isAlive()) {
+                        enemies.erase(std::remove(enemies.begin(), enemies.end(), enemy), enemies.end());
+                    }
                 }
             }
 
-            for (auto& enemy : enemies) {
-                enemy.takeDamage(1);
-                if (!player.isAlive()) {
-                    break;
+            if (enemies.empty()) {
+                std::cout << "All enemies defeated!" << std::endl;
+                break;
+            }
+        }
+    }
+
+    void movePlayerForward(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        int position = dll.getPositionFromString("P");
+        if (position != -1 && position < dll.getSize() && dll.getDataFromPosition(position + 1).begin()->second == "X") {
+            dll.setNodeAt(position + 1, {{position + 1, "P"}});
+            dll.setNodeAt(position, {{position, "X"}});
+        }
+    }
+
+    void movePlayerBackward(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        int position = dll.getPositionFromString("P");
+        if (position != -1 && position > 1 && dll.getDataFromPosition(position - 1).begin()->second == "X") {
+            dll.setNodeAt(position - 1, {{position - 1, "P"}});
+            dll.setNodeAt(position, {{position, "X"}});
+        }
+    }
+
+    void moveEnemiesForward(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        for (int i = dll.getSize(); i >= 1; --i) {
+            if (dll.getDataFromPosition(i).begin()->second == "E1" || dll.getDataFromPosition(i).begin()->second == "E2") {
+                if (i < dll.getSize() && dll.getDataFromPosition(i + 1).begin()->second == "X") {
+                    dll.setNodeAt(i + 1, {{i + 1, dll.getDataFromPosition(i).begin()->second}});
+                    dll.setNodeAt(i, {{i, "X"}});
                 }
             }
         }
+    }
+
+    void moveEnemiesBackward(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        for (int i = 1; i <= dll.getSize(); ++i) {
+            if (dll.getDataFromPosition(i).begin()->second == "E1" || dll.getDataFromPosition(i).begin()->second == "E2") {
+                if (i > 1 && dll.getDataFromPosition(i - 1).begin()->second == "X") {
+                    dll.setNodeAt(i - 1, {{i - 1, dll.getDataFromPosition(i).begin()->second}});
+                    dll.setNodeAt(i, {{i, "X"}});
+                }
+            }
+        }
+    }
+
+    void attack(DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        int playerPos = dll.getPositionFromString("P");
+        for (int i = 1; i <= dll.getSize(); ++i) {
+            if ((dll.getDataFromPosition(i).begin()->second == "E1" || dll.getDataFromPosition(i).begin()->second == "E2") &&
+                (std::abs(playerPos - i) == 1)) {
+                dll.setNodeAt(i, {{i, "X"}});
+                std::cout << "Enemy at position " << i << " defeated!" << std::endl;
+            }
+        }
+    }
+
+    void printTiles(const DoublyLinkedList<std::unordered_map<int, std::string>>& dll) {
+        dll.printForward();
     }
 
     ~Combat() = default;
@@ -258,13 +374,18 @@ public:
 
     void connectRooms() {
         for (auto& room : rooms) {
-            int minConnections = (room.roomType == RoomType::Spawn || room.roomType == RoomType::Boss) ? 1 : 2;
-            int maxConnections = (room.roomType == RoomType::Spawn || room.roomType == RoomType::Boss) ? 1 : 3;
+            // Skip connecting the boss room
+            if (room.roomType == RoomType::Boss) {
+                continue;
+            }
 
-            // Create a list of rooms excluding the current room
+            int minConnections = (room.roomType == RoomType::Spawn) ? 1 : 2;
+            int maxConnections = (room.roomType == RoomType::Spawn) ? 1 : 3;
+
+            // Create a list of rooms excluding the current room and the boss room
             std::vector<Room> potentialConnections;
             for (auto& other : rooms) {
-                if (!(room == other)) { // Exclude the current room
+                if (!(room == other) && other.roomType != RoomType::Boss) { // Exclude the current room and the boss room
                     potentialConnections.push_back(other);
                 }
             }
@@ -326,7 +447,7 @@ public:
 
         // Check for unvisited rooms and connect them to the nearest visited room
         for (size_t i = 0; i < rooms.size(); ++i) {
-            if (!visited[i]) {
+            if (!visited[i] && rooms[i].roomType != RoomType::Boss) { // Skip the boss room
                 int nearestVisited = -1;
                 double minDistance = std::numeric_limits<double>::infinity();
 
@@ -487,17 +608,34 @@ public:
 class LargeRoom : public RoomBase {
 private:
     Room room;
+    Combat combat;
+    std::vector<Enemy> enemies;
+
+    static std::vector<Enemy> createEnemies(const Room& room) {
+        srand(time(nullptr));
+        std::vector<Enemy> enemies;
+        // Create enemies based on room properties
+        enemies.push_back(Enemy(room));
+        enemies.push_back(Enemy(room));
+        return enemies;
+    }
+
 public:
-    LargeRoom(const Room& room) : room(room) {}
+    LargeRoom(const Room& room, Player& player)
+        : room(room), enemies(createEnemies(room)), combat(player, enemies) {}
+
     void enterRoom(Player& player) override {
         if (isCleared) {
             std::cout << "You have already cleared this room!" << std::endl;
             Sleep(2000);
             return;
+        } else {
+            std::cout << "You have entered a Large room at " << room.position.first << ", " << room.position.second << std::endl;
+            Sleep(2000);
+            combat.makeFloor(); // Initialize the floor layout
+            combat.startCombat(combat.dll);
+            isCleared = true;
         }
-        std::cout << "You have entered a Large room at " << room.position.first << ", " << room.position.second << std::endl;
-        Sleep(2000);
-        isCleared = true;
     }
 };
 
@@ -535,36 +673,52 @@ public:
     }
 };
 
+class BossRoom : public RoomBase {
+private:
+    Room room;
 
-using RoomVariant = std::variant<std::unique_ptr<LargeRoom>, std::unique_ptr<TreasureRoom>, std::unique_ptr<TrapRoom>>;
+public:
+    BossRoom(const Room& room) : room(room) {}
+    void enterRoom(Player& player) override {
+        if (isCleared) {
+            std::cout << "You have already cleared this room!" << std::endl;
+            Sleep(2000);
+            return;
+        }
+        std::cout << "You have entered the Boss room at " << room.position.first << ", " << room.position.second << std::endl;
+        Sleep(2000);
+        isCleared = true;
+    }
+};
+
+
+using RoomVariant = std::variant<std::unique_ptr<LargeRoom>, std::unique_ptr<TreasureRoom>, std::unique_ptr<TrapRoom>, std::unique_ptr<BossRoom>>;
 
 class GameLogic {
 private:
     Floor floor;
     Room currentRoom;
     Player player;
-    Enemy enemy;
     std::set<int> visitedRooms; // Set to keep track of visited rooms
     std::unordered_map<Room, RoomVariant, RoomHash> map;
-    
+
 public:
-    GameLogic(int floorNumber, int minRooms, int maxRooms) 
-        : floor(floorNumber, minRooms, maxRooms), 
-          player(floor.getSpawnRoom()), 
-          enemy(floor.getBossRoom()),
-          currentRoom(floor.getSpawnRoom()) {
+    GameLogic(int floorNumber, int minRooms, int maxRooms)
+        : floor(floorNumber, minRooms, maxRooms), currentRoom(floor.getRooms().front()), player(currentRoom) {
         visitedRooms.insert(currentRoom.roomNumber); // Mark the spawn room as visited
     }
 
     void MainLoop() {
         system("cls");
         floor.DrawMap(visitedRooms); // Pass visited rooms to DrawMap
+        std::cout << "Welcome to the dungeon!" << std::endl;
+        Sleep(2000);
         std::vector<Room> rooms = floor.getRooms();
 
         for (const auto& room : rooms) {
             switch (room.roomType) {
                 case RoomType::Large: {
-                    map[room] = std::make_unique<LargeRoom>(room);
+                    map[room] = std::make_unique<LargeRoom>(room, player);
                     break;
                 }
                 case RoomType::Treasure: {
@@ -575,22 +729,21 @@ public:
                     map[room] = std::make_unique<TrapRoom>(room);
                     break;
                 }
-                case RoomType::Spawn: {
+                case RoomType::Boss: {
+                    map[room] = std::make_unique<BossRoom>(room);
                     break;
                 }
-                case RoomType::Boss: {
+                case RoomType::Spawn: {
                     break;
                 }
             }
         }
 
-        while (player.isAlive() && enemy.isAlive()) {
+        while (player.isAlive()) {
             SetCursorAtXY(0, MAX_MAP_Y + 1);
             std::cout << "Current Room: " << currentRoom << std::endl;
             std::cout << "Player: ";
             player.printStatus();
-            std::cout << "Enemy: ";
-            enemy.printStatus();
 
             std::cout << "Connected Rooms: " << std::endl;
             int count = 0;
@@ -617,13 +770,6 @@ public:
             currentRoom = rooms[nextRoomNumber];
             visitedRooms.insert(currentRoom.roomNumber); // Mark the new room as visited
 
-            // Debugging output
-            std::cout << "Visited Rooms: ";
-            for (const auto& roomNumber : visitedRooms) {
-                std::cout << roomNumber << " ";
-            }
-            std::cout << std::endl;
-
             auto it = map.find(currentRoom);
             if (it != map.end()) {
                 std::visit([&](auto& roomPtr) {
@@ -633,17 +779,15 @@ public:
 
             system("cls");
             floor.DrawMap(visitedRooms); // Redraw the map with updated visited rooms
-        }        
+        }
     }
-
-    ~GameLogic() = default;
 };
 
 
 
 std::set<std::pair<int, int>> Floor::occupiedPositions;
 int main() {
-    GameLogic game(1, 10, 15);
+    GameLogic game(1, 5, 10);
     game.MainLoop();
     return 0;
 }
