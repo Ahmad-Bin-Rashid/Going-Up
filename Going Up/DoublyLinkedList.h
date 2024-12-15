@@ -103,7 +103,6 @@ public:
 
     void printForward() const {
         for (auto current = head; current != nullptr; current = current->next) {
-            // Access and print each key-value pair
             for (const auto& pair : current->data) {
                 std::cout << pair.second << " ";
             }
