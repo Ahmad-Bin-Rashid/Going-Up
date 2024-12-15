@@ -4,12 +4,6 @@
 #include <vector>
 #include <string>
 #include "Room.h"
-#include <windows.h>
-
-void SetCursorPosition(int x, int y) {
-    COORD coord = {static_cast<SHORT>(x), static_cast<SHORT>(y)};
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-}
 
 
 std::string roomTypeToString(RoomType roomType) {

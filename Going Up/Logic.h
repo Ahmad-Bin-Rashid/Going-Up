@@ -10,14 +10,15 @@
 #include <string>
 #include <variant>
 #include <unordered_map>
+#include <chrono>
+#include <thread>
+#include <windows.h>
 #include "Utility.h"
 #include "Room.h"
 #include "Enums.h"
 #include "DoublyLinkedList.h"
 #include "Stack.h"
 #include "Queue.h"
-#include <chrono>
-#include <thread>
 #include "UI.h"
 
 #define MAX_MAP_X 80
@@ -303,10 +304,10 @@ public:
           enemy(enemy) {}
 
     void makeFloor() {
-        dll.pushBack({{1, "P"}}); // Add player
+        dll.pushBack({{1, "P"}});
         for (int i = 2; i <= 4; ++i) dll.pushBack({{i, "X"}}); // Empty tiles
-        dll.pushBack({{5, "E"}}); // Add enemy
-        dll.pushBack({{6, "X"}}); // Empty tile
+        dll.pushBack({{5, "E"}});
+        dll.pushBack({{6, "X"}}); 
     }
 
     bool startCombat() {
@@ -361,18 +362,18 @@ public:
 
         while (!turnEnded) {
             int choice;
+            std::cout << ">> Your Turn: ";
             std::cin >> choice;
-            std::cout << "Player's turn: " << choice << std::endl;
 
             switch (choice) {
             case 1:
                 movePlayer(player.getDirection());
                 turnEnded = true;
-                break; // Move in the direction player is facing
+                break; 
             case 2:
                 movePlayer(-player.getDirection());
                 turnEnded = true;
-                break; // Move in the opposite direction
+                break;
             case 3:
                 addCardToAttackStack();
                 turnEnded = true;
@@ -380,7 +381,7 @@ public:
             case 4:
                 executeAttackStack(playerPos, enemyPos);
                 turnEnded = true;
-                break; // Execute attacks from the player's attack stack
+                break; 
             case 5:
                 player.changeDirection();
                 turnEnded = true;
@@ -395,16 +396,12 @@ public:
     void addCardToAttackStack() {
         std::string consoleText = "";
         auto cards = player.getCards();
-        std::cout << "Select a card to add to the attack stack: (-1 to return)\n";
-        for (size_t i = 0; i < cards.size(); ++i) {
-            std::cout << i << ". ";
-            std::visit([](const auto& card) { std::cout << card.getName() << "\n"; }, cards[i]);
-        }
+        std::cout << ">> Select a card to add to the attack stack: (-1 to return)";
 
         int cardChoice;
         while (true) {
             std::cin >> cardChoice;
-            if (cardChoice == -1) break; // Stop adding cards
+            if (cardChoice == -1) break; 
 
             if (cardChoice < 0 || cardChoice >= cards.size()) {
                 consoleText = "Invalid card choice!";
@@ -453,7 +450,7 @@ public:
                         int cardIndex = rand() % cards.size();
                         auto selectedCard = cards[cardIndex];
                         enemyCharacter.addCardToAttackStack(selectedCard);
-                        enemyCharacter.removeCard(cards[cardIndex]); // Remove the card from the enemy's card list
+                        enemyCharacter.removeCard(cards[cardIndex]);
                         enemyTurn = "Enemy added " + std::visit([](const auto& card) { return card.getName(); }, selectedCard) + " to the attack stack.";
                     } else {
                         enemyTurn = "Enemy has no cards to add to the attack stack!";
@@ -587,13 +584,11 @@ public:
             int attackerPos = dll.getPositionFromString("P");
             int targetPos = dll.getPositionFromString("E");
 
-            // Move attacker toward target until 1 tile away
             while (std::abs(attackerPos - targetPos) > 1) {
                 int direction = (targetPos > attackerPos) ? 1 : -1;
                 int newPos = attackerPos + direction;
 
                 if (dll.getDataFromPosition(newPos).begin()->second == "X") {
-                    // Update positions in the linked list
                     dll.setNodeAt(newPos, {{newPos, "P"}});
                     dll.setNodeAt(attackerPos, {{attackerPos, "X"}});
                     attackerPos = newPos;
@@ -604,12 +599,10 @@ public:
                 }
             }
 
-            // Check if Dash or ShadowStep card can attack the target
             if (std::abs(attackerPos - targetPos) == 1) {
-                isInRange = true; // Target is in range for Dash or ShadowStep
+                isInRange = true; 
             }
 
-            // Additional behavior for ShadowStep
             if constexpr (std::is_same_v<CardType, ShadowStep>) {
                 if (targetPos != 1 && targetPos != dll.getSize()) {
                     int jumpPos = targetPos + 1;
@@ -627,32 +620,26 @@ public:
                 screen.updateOutputConsole(attackText);
             }
         } else {
-            // Handle other cards (like Single Slash, Bow, etc.)
             int attackerPos = dll.getPositionFromString("P");
             int targetPos = dll.getPositionFromString("E");
 
-            // Check if the card can attack the target
             if (canAttack(player, targetPos, attackerPos, card)) {
-                isInRange = true; // Target is in range
+                isInRange = true; 
             }
         }
 
-        // Apply effect if in range
         if (isInRange) {
             if constexpr (std::is_same_v<T, std::variant<Goblin, SkeletonWarrior, CaveSpider, FireImp, InfernalWarlord>>) {
-                // Use std::visit to extract the actual type and invoke the card's use function
                 std::visit([&](auto& actualTarget) {
                     card.use(actualTarget);
                 }, target);
                 attackText = card.getName() + " was used by " + (std::is_same_v<T, Player> ? "Player" : "Enemy") + "!";
             } else {
-                // Directly use the card on the target if it's not a variant
                 card.use(target);
                 attackText = card.getName() + " was used by " + (std::is_same_v<T, Player> ? "Player" : "Enemy") + "!";
             }
             screen.updateOutputConsole(attackText);
         } else {
-            // Print message if the card is ineffective
             attackText = card.getName() + " was ineffective (enemy out of range).";
             screen.updateOutputConsole(attackText);
         }
@@ -691,7 +678,7 @@ public:
             Room spawn(0, RoomType::Spawn, {0, 0});
             Room boss(1, RoomType::Boss, bossPosition);
 
-            //ensure that at least 2 large rooms will be generated
+            // Ensure that at least 2 large rooms will be generated
             Room large(2, RoomType::Large, RandomCoord());
             Room large2(3, RoomType::Large, RandomCoord());
             rooms.push_back(spawn);
@@ -699,7 +686,7 @@ public:
             rooms.push_back(large);
             rooms.push_back(large2);
 
-            for (int i = 2; i < roomCount; ++i) {
+            for (int i = 4; i < roomCount; ++i) {
                 RoomType randomType = static_cast<RoomType>(1 + rand() % 3);
                 rooms.emplace_back(Room(i, randomType, RandomCoord()));
             }
@@ -713,17 +700,6 @@ public:
         }
 
         std::cout << "Valid map generated with " << rooms.size() << " rooms.\n";
-    }
-
-    bool validateMap() const {
-        for (const auto& room : rooms) {
-            if (room.roomType == RoomType::Boss) continue;
-            if (room.connectedRooms.empty()) {
-                std::cout << "Room " << room.roomNumber << " has no connections!\n";
-                return false;
-            }
-        }
-        return true;
     }
 
     void connectRooms() {
@@ -755,8 +731,7 @@ public:
             }
         }
 
-        // Ensure the boss room has at least one connection
-        Room& bossRoom = rooms[1]; // Assuming the boss room is always at index 1
+        Room& bossRoom = rooms[1];
         if (bossRoom.connectedRooms.empty()) {
             Room* nearestRoom = nullptr;
             double minDistance = std::numeric_limits<double>::infinity();
@@ -844,8 +819,7 @@ public:
             }
         }
 
-        // Ensure the boss room has at least one connection
-        Room& bossRoom = rooms[1]; // Assuming the boss room is always at index 1
+        Room& bossRoom = rooms[1]; 
         if (bossRoom.connectedRooms.empty()) {
             Room* nearestRoom = nullptr;
             double minDistance = std::numeric_limits<double>::infinity();
@@ -865,15 +839,33 @@ public:
                 nearestRoom->connectedRooms.push_back(bossRoom.roomNumber);
             }
         }
+    }
 
-        // Debugging output
-        for (const auto& room : rooms) {
-            std::cout << "Room " << room.roomNumber << " connections: ";
-            for (const auto& connectedRoom : room.connectedRooms) {
-                std::cout << connectedRoom << " ";
+    bool validateMap() {
+        std::vector<bool> visited(rooms.size(), false);
+        Queue<int> toVisit;
+        toVisit.enqueue(0);
+
+        while (!toVisit.empty()) {
+            int current = toVisit.front();
+            toVisit.dequeue();
+            if (visited[current]) continue;
+
+            visited[current] = true;
+            for (int connectedRoom : rooms[current].connectedRooms) {
+                if (!visited[connectedRoom]) {
+                    toVisit.enqueue(connectedRoom);
+                }
             }
-            std::cout << std::endl;
         }
+
+        for (size_t i = 0; i < rooms.size(); ++i) {
+            if (!visited[i] && rooms[i].roomType != RoomType::Boss) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     std::pair<int, int> RandomCoord() const {
@@ -948,19 +940,8 @@ public:
             }
         }
     }
-    
-    // void printMapAndConnections() {
-    //     for (const auto& room : rooms) {
-    //         std::cout << room << " Connected Rooms: ";
-    //         for (int connectedRoomNumber : room.connectedRooms) {
-    //             std::cout << connectedRoomNumber << " ";
-    //         }
-    //         std::cout << std::endl;
-    //     }
-    // }
 };
 
-// Define static member
 std::set<std::pair<int, int>> Floor::occupiedPositions;
 
 
@@ -1015,7 +996,7 @@ public:
         bool combatWon = combat.startCombat();
 
         if (combatWon) {
-            isCleared = true; // Mark room as cleared only if the player wins
+            isCleared = true; 
             std::cout << "Room is cleared!" << std::endl;
         } else {
             std::cout << "You were defeated in this room!" << std::endl;
@@ -1041,7 +1022,6 @@ public:
             int reward = rand() % 2;
 
             if (reward == 0) {
-                // Give a random card
                 std::vector<CardVariant> possibleCards = {
                     DoubleSlash(),
                     SingleSlash(),
@@ -1059,12 +1039,12 @@ public:
             screen.print();
             Sleep(5000);
 
-            isCleared = true; // Mark the room as cleared
+            isCleared = true; 
         }
     }
 
     bool hasEnemy() const override {
-        return false; // TreasureRoom does not have enemies
+        return false; 
     }
 };
 
@@ -1081,7 +1061,6 @@ public:
         int trapEffect = rand() % 2; 
 
         if (trapEffect == 0) {
-            // Player gets attacked with a random card
             std::vector<CardVariant> possibleCards = {
                 DoubleSlash(),
                 SingleSlash(),
@@ -1093,18 +1072,17 @@ public:
             std::cout << "You are attacked with " << std::visit([](auto& card) { return card.getName(); }, attackCard) << "!" << std::endl;
             std::visit([&](auto& card) { card.use(player); }, attackCard); // Apply the card's effect on the player
         } else {
-            // Player gets poisoned
             player.damage(1);
             std::cout << "You are poisoned! Health decreased by 1." << std::endl;
         }
 
         screen.print();
         Sleep(5000);
-        isCleared = true; // Mark the room as cleared
+        isCleared = true;
     }
 
     bool hasEnemy() const override {
-        return false; // TrapRoom does not have enemies
+        return false;
     }
 };
 
@@ -1127,7 +1105,7 @@ public:
             bool combatWon = combat.startCombat();
 
             if (combatWon) {
-                isCleared = true; // Mark room as cleared only if the player wins
+                isCleared = true;
                 std::cout << "Boss defeated! Room is cleared!" << std::endl;
             } else {
                 std::cout << "You were defeated by the boss!" << std::endl;
@@ -1158,6 +1136,15 @@ public:
     }
 
     void MainLoop() {
+        int count = 50;
+        screen.InitializeInstructionsWindow();
+        while(count > 0) {
+            screen.print();
+            Sleep(100);
+            screen.setString(10, 30, "Story Screen will close in " + std::to_string(count));
+            count--;
+        }
+
         std::vector<Room> rooms = floor.getRooms();
 
         for (const auto& room : rooms) {
@@ -1200,7 +1187,7 @@ public:
 
             int nextRoomNumber = currentRoom.connectedRooms[choice];
             currentRoom = rooms[nextRoomNumber];
-            visitedRooms.insert(currentRoom.roomNumber); // Mark the new room as visited
+            visitedRooms.insert(currentRoom.roomNumber);
 
             auto it = map.find(currentRoom.roomNumber);
             if (it != map.end()) {
@@ -1208,7 +1195,7 @@ public:
                     roomPtr->enterRoom(player);
                     if (!player.isAlive()) {
                         std::cout << "You died! Game Over." << std::endl;
-                        exit(0); // Exit game if player dies
+                        exit(0);
                     }
                 }, it->second);
             }

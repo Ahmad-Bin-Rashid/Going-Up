@@ -2,6 +2,10 @@
 
 #include "Logic.h"
 #include <vector>
+#include <sstream>
+
+#define SCREEN_WIDTH 140
+#define SCREEN_HEIGHT 36
 
 class ScreenBuffer
 {
@@ -78,9 +82,10 @@ class ScreenBuffer
             setString(StartX + 5, StartY + 5, "-> Connected Rooms:");
             int count = 0;
             for (int connectedRoomNumber : currentRoom.connectedRooms) {
-                setString(StartX + 5, StartY + 6 + count, std::to_string(count) + ". ");
-                setString(StartX + 5 + 3, StartY + 6 + count, roomTypeToString(rooms[connectedRoomNumber].roomType) + "  (" + std::to_string(rooms[connectedRoomNumber].position.first) + ", " + std::to_string(rooms[connectedRoomNumber].position.second) + ")");
-                count++;
+            std::string roomInfo = occupiedPositions.count(connectedRoomNumber) ? roomTypeToString(rooms[connectedRoomNumber].roomType) : "???";
+            setString(StartX + 5, StartY + 6 + count, std::to_string(count) + ". ");
+            setString(StartX + 5 + 3, StartY + 6 + count, roomInfo + "  (" + std::to_string(rooms[connectedRoomNumber].position.first) + ", " + std::to_string(rooms[connectedRoomNumber].position.second) + ")");
+            count++;
             }
 
             setString(StartX, StartY + 6 + count + 1, "--------------------------------------------------------------");
@@ -114,12 +119,10 @@ class ScreenBuffer
             setString(0, 25, ">>");
             setString(0, 26, ">>");
             setString(0, 28, "----------------------------------------------------------------------------------");
-            setString(0, 29, "Next Move:");
-            setString(0, 30, ">>");
         }
         void updatePlayerAttackStack(std::vector<std::string> playerAttackStack) {
             // clear the previous cards
-            for (int i = 1; i < 85; i+=15) {
+            for (int i = 1; i < SCREEN_WIDTH; i+=15) {
                 setString(i, 8, "               ");
             }
             for (int i = 0; i < playerAttackStack.size(); ++i) {
@@ -132,7 +135,7 @@ class ScreenBuffer
         }
         void updateEnemyAttackStack(std::vector<std::string> enemyAttackStack) {
             // clear the previous cards
-            for (int i = 1; i < 85; i+=15) {
+            for (int i = 1; i < SCREEN_WIDTH; i+=15) {
                 setString(i, 8, "               ");
             }
             for (int i = 0; i < enemyAttackStack.size(); ++i) {
@@ -145,7 +148,7 @@ class ScreenBuffer
         }
         void updateAvailableCards(std::vector<std::string> cards) {
             // clear the previous cards
-            for (int i = 1; i < 85; i++) {
+            for (int i = 1; i < SCREEN_WIDTH; i++) {
                 setString(i, 12, " ");
             }
             int count = 0;
@@ -157,7 +160,7 @@ class ScreenBuffer
         void updateTiles(std::vector<std::string> tiles, int playerDirection, int enemyDirection) {
             int count = 0;
             // clear the previous tiles
-            for (int i = 1; i < 85; i+=15) {
+            for (int i = 1; i < SCREEN_WIDTH; i+=15) {
                 setString(i, 1, "               ");
             }
             for (int i = 1; i < 85; i+=15) {
@@ -243,47 +246,9 @@ class ScreenBuffer
             setString(2, 23,"|_______________________________________________________________________________|");
             setString(2, 24,"|                                                                               |");
             setString(2, 25,"|>> You Got a Potion .Healed for 3 Hp .                                         |");
-            setString(2, 26,"|   Your Journey Will Be Continued ...                                               |");
+            setString(2, 26,"|   Your Journey Will Be Continued ...                                          |");
             setString(2, 27,"|_______________________________________________________________________________|");
         }
-
-
-// |*******************************************************************************|                                                                                  
-// |                    ___                              _...__                    |                                                              
-// |                 .-'   '--._                       .'_     '-.                 |                                                                  
-// |               .'     .--._ '-._                 .'.' \       '.               |                                                                  
-// |              /      /__   `'.  '.              / /    `\       \              |                                                                      
-// |             /      /   '-.    `\ \           /'/'       \      |              |                                                                      
-// |             |     |       '.    `\`\        / /     _.-'|      |              |                                                                      
-// |             |     |         \     \ \      / /    .'    |      /              |                                                                      
-// |              \    /          '.   | |,-~-,/ /   .'      \     /               |                                                                  
-// |               '--'           __\               /__       '._.'                |                                                                  
-// |                            ."  '.             .'  ".                          |                                                          
-// |                            |      '.       .'      |                          |                                                          
-// |                             \ ',    '.   .'    .' /                           |                                                      
-// |                             /'-.""-._ \ / _.-"".-'\                           |                                                      
-// |                  _.=='''--,/ '/_.--._\'V'/_.--._\' \,--'''--._                |                                                                  
-// |                .'            _'-.__0_;\ /;_0__.-' _'          '.              |                                                                      
-// |               /     ,____..-'\'.      """      -'/'--..____,    \             |                                                                      
-// |              /     '          \       .=.       /          `     \            |                                                                      
-// |              |             __  '-.   .-=-.   .-'  __             |            |                                                                      
-// |               \      _.--''  ''---'. .-=-. .'---''  ''--._      /             |                                                                      
-// |                '----'            .-'  ___  '-.            `----'              |                                                                      
-// |                                 (    '   '    )                               |                                                  
-// |                                  '.    _    .'                                |                                                  
-// |                                    '--/ \--'                                  |                                                  
-// |                                       |#|                                     |                                              
-// |                                       \_/                                     |                                              
-// |                                                                               |  
-// |*******************************************************************************|
-// |_______________________________________________________________________________|
-// |                                                                               |
-// |                       Congrats You entered a Trap Room                        |
-// |_______________________________________________________________________________|
-// |                                                                               |
-// |>> You Got Hit for  3 Damage.                                                  |
-// |   Press any key to continue ...                                               |
-// |_______________________________________________________________________________|
 
         void InitializeTrapRoom() {
             clear();
@@ -322,8 +287,81 @@ class ScreenBuffer
             setString(2, 31,"|_______________________________________________________________________________|");
             setString(2, 32,"|                                                                               |");
             setString(2, 33,"|>> You Got Hit for  3 Damage.                                                  |");
-            setString(2, 34,"|   Your Journey Will Be Continued ...                                               |");
+            setString(2, 34,"|   Your Journey Will Be Continued ...                                          |");
             setString(2, 35,"|_______________________________________________________________________________|");
         }
-        
+
+    void InitializeInstructionsWindow() {
+        clear();
+        setString(2, 0, " ____                                                                                                            ____ ");
+        setString(2, 1, "( __ )                                                                                                          ( __ )");
+        setString(2, 2, " |  |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|  | ");
+        setString(2, 3, " |  |                                                                                                            |  | ");
+        setString(2, 4, " |  |                                                                                                            |  | ");
+        setString(2, 5, " |  |                                                                                                            |  | ");
+        setString(2, 6, " |  |                                                                                                            |  | ");
+        setString(2, 7, " |  |                                                                                                            |  | ");
+        setString(2, 8, " |  |                                                                                                            |  | ");
+        setString(2, 9, " |  |                                                                                                            |  | ");
+        setString(2, 10, " |  |                                                                                                            |  | ");
+        setString(2, 11, " |  |                                                                                                            |  | ");
+        setString(2, 12, " |  |                                                                                                            |  | ");
+        setString(2, 13, " |  |                                                                                                            |  | ");
+        setString(2, 14, " |  |                                                                                                            |  | ");
+        setString(2, 15, " |  |                                                                                                            |  | ");
+        setString(2, 16, " |  |                                                                                                            |  | ");
+        setString(2, 17, " |  |                                                                                                            |  | ");
+        setString(2, 18, " |  |                                                                                                            |  | ");
+        setString(2, 19, " |  |                                                                                                            |  | ");
+        setString(2, 20, " |  |                                                                                                            |  | ");
+        setString(2, 21, " |  |                                                                                                            |  | ");
+        setString(2, 22, " |  |                                                                                                            |  | ");
+        setString(2, 23, " |  |                                                                                                            |  | ");
+        setString(2, 24, " |  |                                                                                                            |  | ");
+        setString(2, 25, " |  |                                                                                                            |  | ");
+        setString(2, 26, " |  |                                                                                                            |  | ");
+        setString(2, 27, " |  |                                                                                                            |  | ");
+        setString(2, 28, " |  |                                                                                                            |  | ");
+        setString(2, 29, " |  |                                                                                                            |  | ");
+        setString(2, 30, " |  |                                                                                                            |  | ");
+        setString(2, 31, " |  |                                                                                                            |  | ");
+        setString(2, 32, " |  |                                                                                                            |  | ");
+        setString(2, 33, " |__|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|__| ");
+        setString(2, 34, "(____)                                                                                                          (____)");
+        printTextInsideInstructionsOneWordAtATime();
+    }
+
+    void printTextInsideInstructionsOneWordAtATime() {
+        std::vector<std::string> paragraphs = {
+            "Welcome to 'Going Up'! You find yourself trapped in an ancient dungeon after a violent typhoon struck your town. The storm caused a massive power outage, plunging the entire area into darkness. Seeking shelter, you stumble upon a hidden entrance to a mysterious underground labyrinth. With no other options, you decide to venture inside.",
+            "The dungeon is filled with treacherous traps, fearsome enemies, and valuable treasures. Your goal is to navigate through the dungeon's many rooms, each with its own unique challenges, and reach the top floor to find a way back to the surface. Along the way, you must gather resources, fight enemies, and solve puzzles to survive.",
+            "Can you overcome the dangers of the dungeon and escape to safety? Good luck!"
+        };
+
+        int x = 10;
+        int y = 6;
+        for (const auto& paragraph : paragraphs) {
+            std::istringstream iss(paragraph);
+            std::string word;
+            std::string line;
+            while (iss >> word) {
+                if (line.size() + word.size() + 1 > 100) {
+                    setString(x, y++, line);
+                    line.clear();
+                }
+                if (!line.empty()) {
+                    line += " ";
+                }
+                line += word;
+                setString(x, y, line);
+                print();
+                Sleep(100);
+            }
+            if (!line.empty()) {
+                setString(x, y++, line);
+                print();
+            }
+            y++;
+        }
+    }
 };
