@@ -16,6 +16,23 @@ private:
 public:
     Stack() = default;
 
+    Stack(const Stack& other) {
+        if (other.head) {
+            head = std::make_unique<Node>();
+            head->data = other.head->data;
+
+            Node* current = head.get();
+            Node* otherCurrent = other.head->next.get();
+
+            while (otherCurrent) {
+                current->next = std::make_unique<Node>();
+                current = current->next.get();
+                current->data = otherCurrent->data;
+                otherCurrent = otherCurrent->next.get();
+            }
+        }
+    }
+
     void push(const T& data) {
         auto newNode = std::make_unique<Node>();
         newNode->data = data;

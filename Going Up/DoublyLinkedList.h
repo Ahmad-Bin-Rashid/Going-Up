@@ -101,12 +101,14 @@ public:
         }
     }
 
-    void printForward() const {
+    std::vector<std::string> getValues() const {
+        std::vector<std::string> values;
         for (auto current = head; current != nullptr; current = current->next) {
             for (const auto& pair : current->data) {
-                std::cout << pair.second << " ";
+                values.push_back(pair.second);
             }
         }
+        return values;
     }
 
     std::shared_ptr<Node> getNodeFromString(const std::string& value) {
