@@ -8,9 +8,3 @@ enum class RoomType
     Large,
     Boss
 };
-
-enum class CharacterDirection 
-{
-    Left,
-    Right,
-};

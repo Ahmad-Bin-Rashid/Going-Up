@@ -14,8 +14,20 @@ struct Room {
     bool isVisited;
     std::vector<int> connectedRooms;
 
+    struct Hash {
+        size_t operator()(const Room& room) const {
+            size_t h1 = std::hash<int>()(room.roomNumber);
+            size_t h2 = std::hash<int>()(room.position.first);
+            size_t h3 = std::hash<int>()(room.position.second);
+            return h1 ^ (h2 << 1) ^ (h3 << 2);
+        }
+    };
+
+    // Equality operator
     bool operator==(const Room& other) const {
-        return roomNumber == other.roomNumber;
+        return roomNumber == other.roomNumber &&
+               position == other.position &&
+               roomType == other.roomType;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Room& room) {
@@ -39,12 +51,6 @@ struct Room {
             visitedRooms.push_back(roomNumber);
         }
         return visitedRooms;
-    }
-};
-
-struct RoomHash {
-    std::size_t operator()(const Room& room) const {
-        return std::hash<int>()(room.roomNumber);
     }
 };
 

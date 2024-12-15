@@ -105,9 +105,8 @@ public:
         for (auto current = head; current != nullptr; current = current->next) {
             // Access and print each key-value pair
             for (const auto& pair : current->data) {
-                std::cout << pair.first << ": " << pair.second << " ";
+                std::cout << pair.second << " ";
             }
-            std::cout << std::endl;
         }
     }
 

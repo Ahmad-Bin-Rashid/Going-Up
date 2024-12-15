@@ -22,6 +22,17 @@ public:
         return data[frontIndex++];
     }
 
+    int front() const {
+        if (isEmpty()) {
+            throw std::out_of_range("Queue is empty");
+        }
+        return data[frontIndex];
+    }
+
+    bool empty() const {
+        return frontIndex >= data.size();
+    }
+
     bool isEmpty() const {
         return frontIndex >= data.size();
     }
