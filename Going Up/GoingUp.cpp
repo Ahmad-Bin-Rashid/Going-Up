@@ -578,8 +578,14 @@ public:
 
             Room spawn(0, RoomType::Spawn, {0, 0});
             Room boss(1, RoomType::Boss, bossPosition);
+
+            //ensure that at least 2 large rooms will be generated
+            Room large(2, RoomType::Large, RandomCoord());
+            Room large2(3, RoomType::Large, RandomCoord());
             rooms.push_back(spawn);
             rooms.push_back(boss);
+            rooms.push_back(large);
+            rooms.push_back(large2);
 
             for (int i = 2; i < roomCount; ++i) {
                 RoomType randomType = static_cast<RoomType>(1 + rand() % 3);
