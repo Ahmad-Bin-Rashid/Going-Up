@@ -1,4 +1,0 @@
-{
-    "Combat": ["Attack", "Use Item", "Pass Turn"],
-    "Menu": ["Explore Dungeon","Change Attack Graph" ,"View Inventory", "Open Map"]
-}

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Logic.h"
 #include <vector>
 #include <sstream>
+#include "CustomNamespace.h"
+#include "Logic.h"
 
 #define SCREEN_WIDTH 140
 #define SCREEN_HEIGHT 36
@@ -42,13 +43,14 @@ class ScreenBuffer
                     row = std::string(width, ' ');
                 }
         }
-        void print() const 
+        void print() 
         {
-            system("cls");
+            gotoxy(0, 0);
+            ct::p | "\n";
             for (const auto &row : buffer) 
-                {
-                    std::cout << row << '\n';
-                }
+            {
+                ct::p | "  " + row | '\n';
+            }
         }
         void InitializeMap() 
         {
@@ -72,6 +74,7 @@ class ScreenBuffer
         }
 
         void MapOptions(Room currentRoom, std::vector<Room> rooms, std::set<int>& occupiedPositions) {
+            system("cls");
             int StartX = 90;
             int StartY = 2;
 
@@ -98,51 +101,48 @@ class ScreenBuffer
             clear();
             setString(0, 2, " |---------------|---------------|---------------|---------------|---------------|");
             setString(0, 4, "  PLAYER HP: [          ]                 ENEMY HP: [           ]    ");
-            setString(17, 4, "20/20");
-            setString(56, 4, "5/5");
-            setString(0, 6, "----------------------------------------------------------------------------------");
-            setString(0, 7, "  PLAYER STACK:                           ENEMY STACK:");
-            setString(0, 8, "  [Card 1]  [Card 2]                      [Enemy Card 1]  [Enemy Card 2]");
-            setString(0, 10, "----------------------------------------------------------------------------------");
+            setString(17, 4, "?/?");
+            setString(56, 4, "?/?");
+            setString(0, 6, "--------------------------------------------------------------------------------------------------");
+            setString(0, 7, "  PLAYER STACK:                                               ENEMY STACK:");
+            setString(0, 8, "  [Card 1]  [Card 2]                                          [Enemy Card 1]  [Enemy Card 2]");
+            setString(0, 10, "--------------------------------------------------------------------------------------------------");
             setString(0, 11, "AVAILABLE CARDS :");
-            setString(0, 12, "  [Slash (0)]  [Guard (1)]  [Heavy Strike (2)]  [Dodge (0)]  [Fireball (3)]");
-            setString(0, 14, "----------------------------------------------------------------------------------");
+            setString(0, 12, "  [Slash ???]  [Guard ???]  [Heavy Strike ???]  [Dodge ???]  [Fireball ???]");
+            setString(0, 14, "--------------------------------------------------------------------------------------------------");
             setString(0, 15, "AVAILABLE MOVES:");
-            setString(0, 16, "  1) Move Left");
-            setString(0, 17, "  2) Move Right");
+            setString(0, 16, "  1) Move Right");
+            setString(0, 17, "  2) Move Left");
             setString(0, 18, "  3) Add Card To Attack Stack");
             setString(0, 19, "  4) Attack with Current Attack Stack");
             setString(0, 20, "  5) Change Direction");
             setString(0, 21, "  6) Pass Turn");
-            setString(0, 23, "----------------------------------------------------------------------------------");
+            setString(0, 23, "--------------------------------------------------------------------------------------------------");
             setString(0, 24, ">>");
             setString(0, 25, ">>");
-            setString(0, 26, ">>");
-            setString(0, 28, "----------------------------------------------------------------------------------");
+            setString(0, 28, "--------------------------------------------------------------------------------------------------");
         }
         void updatePlayerAttackStack(std::vector<std::string> playerAttackStack) {
-            // clear the previous cards
-            for (int i = 1; i < SCREEN_WIDTH; i+=15) {
+            for (int i = 2; i < 42; i+=15) {
                 setString(i, 8, "               ");
             }
             for (int i = 0; i < playerAttackStack.size(); ++i) {
                 if (i < playerAttackStack.size()) {
-                    setString(2 + 20 * i, 8, playerAttackStack[i]);
+                    setString(2 + 15 * i, 8, playerAttackStack[i]);
                 } else {
-                    setString(2 + 20 * i, 8, "          ");
+                    setString(2 + 15 * i, 8, "          ");
                 }
             }
         }
         void updateEnemyAttackStack(std::vector<std::string> enemyAttackStack) {
-            // clear the previous cards
-            for (int i = 1; i < SCREEN_WIDTH; i+=15) {
+            for (int i = 62; i < SCREEN_WIDTH; i+=15) {
                 setString(i, 8, "               ");
             }
             for (int i = 0; i < enemyAttackStack.size(); ++i) {
                 if (i < enemyAttackStack.size()) {
-                    setString(2 + 20 * i, 8, enemyAttackStack[i]);
+                    setString(62 + 10 * i, 8, enemyAttackStack[i]);
                 } else {
-                    setString(2 + 20 * i, 8, "               ");
+                    setString(62 + 10 * i, 8, "          ");
                 }
             }
         }
@@ -178,35 +178,22 @@ class ScreenBuffer
             }
         }
         void updateOutputConsole(std::string consoleText) {
-            if (consoleOutputs.getSize() == 3) {
-                consoleOutputs.dequeue();
-            }
-            consoleOutputs.enqueue(consoleText);
-        }
-        void printOutputConsole() {
-            if (consoleOutputs.getSize() == 0) {
-                return;
-            }
-            for (int i = 0; i < 3; ++i) {
-                setString(4, 24 + i, consoleOutputs.front());
-                consoleOutputs.enqueue(consoleOutputs.dequeue());
-            }
+            setString(4, 24, "                                                                                                  ");
+            setString(4, 24, consoleText);
         }
         void updatePlayerHP(int hp,int maxHP) 
         {
-            std::string hpStr = std::to_string(hp) + "/" + std::to_string(maxHP);
+            std::string hpStr;
+            if (hp < 10) hpStr = " " + std::string(std::to_string(hp) + "/" + std::to_string(maxHP));
+            else hpStr = std::to_string(hp) + "/" + std::to_string(maxHP);
             setString(17, 4, hpStr);
         }
         void updateEnemyHP(int hp,int maxHP) 
         {
-            std::string hpStr = std::to_string(hp) + "/" + std::to_string(maxHP);
+            std::string hpStr;
+            if (hp < 10) hpStr = " " + std::string(std::to_string(hp) + "/" + std::to_string(maxHP));
+            else hpStr = std::to_string(hp) + "/" + std::to_string(maxHP);
             setString(56, 4, hpStr);
-        }
-        void updatePlayerAttackCardsStack() {
-
-        }
-        void updateEnemyAttackCardsStack() {
-
         }
         void updatePrintAvailableCards(const std::vector<std::string> &cards) 
         {
@@ -218,6 +205,7 @@ class ScreenBuffer
 
 
         void InitializeTreasureRoom() {
+            system("cls");
             clear();
 
             setString(2, 0,"|*******************************************************************************|");
@@ -245,12 +233,13 @@ class ScreenBuffer
             setString(2, 22,"|                     Congrats You entered a Treasure Room                      |");
             setString(2, 23,"|_______________________________________________________________________________|");
             setString(2, 24,"|                                                                               |");
-            setString(2, 25,"|>> You Got a Potion .Healed for 3 Hp .                                         |");
+            setString(2, 25,"|>> You Got a Potion. Healed for 3 Hp.                                          |");
             setString(2, 26,"|   Your Journey Will Be Continued ...                                          |");
             setString(2, 27,"|_______________________________________________________________________________|");
         }
 
         void InitializeTrapRoom() {
+            system("cls");
             clear();
 
             setString(2, 0,"|*******************************************************************************|");
@@ -258,10 +247,10 @@ class ScreenBuffer
             setString(2, 2,"|                 .-'   '--._                       .'_     '-.                 |");
             setString(2, 3,"|               .'     .--._ '-._                 .'.' \\       '.               |");
             setString(2, 4,"|              /      /__   `'.  '.              / /    '\\       \\              |");
-            setString(2, 5,"|             /      /   '-.    '\\ \\           /'/\\'       \\      |              |");
-            setString(2, 6,"|             |     |       '.    '\\\\        / /     _.-'|      |              |");
+            setString(2, 5,"|             /      /   '-.    '\\ \\           /'/\\'       \\      |             |");
+            setString(2, 6,"|             |     |       '.    '\\\\        / /     _.-'|      |               |");
             setString(2, 7,"|             |     |         \\     \\ \\      / /    .'    |      /              |");
-            setString(2, 8,"|              \\    /          '.   | |,-~-,/ /   .'      \\     /              |");
+            setString(2, 8,"|              \\    /          '.   | |,-~-,/ /   .'      \\     /               |");
             setString(2, 9,"|               '--'           __\\               /__       '._.'                |");
             setString(2, 10,"|                            .\"  '.             .'  \".                          |");
             setString(2, 11,"|                            |      '.       .'      |                          |");
@@ -269,7 +258,7 @@ class ScreenBuffer
             setString(2, 13,"|                             /'-.\"\"-._ \\ / _.-\"\".-'\\                           |");
             setString(2, 14,"|                  _.=='''--,/ '/_.--._\\'V'/_.--._\\' \\,--'''--._                |");
             setString(2, 15,"|                .'            _'-.__0_;\\ /;_0__.-' _'          '.              |");
-            setString(2, 16,"|               /     ,____..-'\\'.      \"\"\"      -'/--..____,    \\             |");
+            setString(2, 16,"|               /     ,____..-'\\'.      \"\"\"      -'/--..____,    \\              |");
             setString(2, 17,"|              /     '          \\       .=.       /          `     \\            |");
             setString(2, 18,"|              |             __  '-.   .-=-.   .-'  __             |            |");
             setString(2, 19,"|               \\      _.--''  ''---'. .-=-. .'---''  ''--._      /             |");
@@ -355,7 +344,7 @@ class ScreenBuffer
                 line += word;
                 setString(x, y, line);
                 print();
-                Sleep(100);
+                std::this_thread::sleep_for(std::chrono::milliseconds(0));
             }
             if (!line.empty()) {
                 setString(x, y++, line);

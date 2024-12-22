@@ -45,9 +45,6 @@ struct Room {
     std::vector<int> getConnectedRooms() const {
         std::vector<int> visitedRooms;
         for (int roomNumber : connectedRooms) {
-            // Assuming you have a way to check if a room is visited
-            // This part of the code needs context on how you manage rooms
-            // For now, we assume all rooms in connectedRooms are visited
             visitedRooms.push_back(roomNumber);
         }
         return visitedRooms;

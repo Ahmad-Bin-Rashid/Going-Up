@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <thread>
-#include <windows.h>
+#include "CustomNamespace.h"
 #include "Utility.h"
 #include "Room.h"
 #include "Enums.h"
@@ -24,7 +24,6 @@
 #define MAX_MAP_X 80
 #define MAX_MAP_Y 28
 ScreenBuffer screen(140,36);
-
 
 class Character;
 
@@ -41,6 +40,10 @@ public:
     }
     virtual ~AttackCard() = default;
 };
+
+
+
+
 
 class SingleSlash : public AttackCard {
 public:
@@ -77,6 +80,11 @@ public:
     void use(Character& character) const override;
 };
 
+
+
+
+
+
 using CardVariant = std::variant<DoubleSlash, Bow, SingleSlash, Dash, ShadowStep>;
 
 class Character {
@@ -90,6 +98,15 @@ protected:
 public:
     Character(int health, int maxHealth)
         : health(health), maxHealth(maxHealth) {}
+
+    std::string getName() const {
+        std::string name = typeid(*this).name();
+        size_t pos = name.find("class ");
+        if (pos != std::string::npos) { 
+            name.replace(pos, 6, "");
+        }
+        return name;
+    }
 
     virtual void takeDamage(int damage) {
         health -= damage;
@@ -160,6 +177,10 @@ public:
     virtual ~Character() = default;
 };
 
+
+
+
+
 class Player : public Character {
 public:
     Player() : Character(20, 20) {
@@ -194,6 +215,10 @@ public:
     ~Player() = default;
 };
 
+
+
+
+
 class Enemy : public Character {
 public:
     Enemy(int HP, int maxHP) : Character(HP, maxHP) {
@@ -213,6 +238,12 @@ public:
 
     ~Enemy() = default;
 };
+
+
+
+
+
+
 
 class Goblin : public Enemy {
 public:
@@ -253,6 +284,11 @@ public:
     ~FireImp() = default;
 };
 
+
+
+
+
+
 class InfernalWarlord : public Enemy {
 public:
     InfernalWarlord() : Enemy(10, 10) {
@@ -290,13 +326,18 @@ void ShadowStep::use(Character& character) const {
     character.takeDamage(damage);
 }
 
+
+
+
+
 class Combat {
 private:
     Player& player;
     EnemyVariant& enemy;
     DoublyLinkedList<std::unordered_map<int, std::string>> dll;
 
-    int turnCounter = 0; // Tracks the turn count
+    int playerTurnCounter = 0;
+    int enemyTurnCounter = 0; 
 
 public:
     Combat(Player& player, EnemyVariant& enemy)
@@ -305,25 +346,63 @@ public:
 
     void makeFloor() {
         dll.pushBack({{1, "P"}});
-        for (int i = 2; i <= 4; ++i) dll.pushBack({{i, "X"}}); // Empty tiles
+        for (int i = 2; i <= 4; ++i) dll.pushBack({{i, "X"}});
         dll.pushBack({{5, "E"}});
         dll.pushBack({{6, "X"}}); 
     }
 
     bool startCombat() {
-        while (true) {
+        screen.updateOutputConsole("Player X " + std::visit([](auto& e) -> std::string { return e.getName(); }, enemy));
+
+        while (player.isAlive() && std::visit([](auto& e) { return e.isAlive(); }, enemy)) {
             std::vector<std::string> cardNames;
             for (const auto& card : player.getCards()) {
                 cardNames.push_back(std::visit([](const auto& c) { return c.getName(); }, card));
             }
             screen.updateAvailableCards(cardNames);
+            screen.updateEnemyHP(std::visit([](auto& e) { return e.getHealth(); }, enemy), std::visit([](auto& e) { return e.getMaxHealth(); }, enemy));
+            screen.updatePlayerHP(player.getHealth(), player.getMaxHealth());
             printTiles(player.getDirection(), std::visit([](auto& e) { return e.getDirection(); }, enemy));
-            getchar();
 
             int playerPos = dll.getPositionFromString("P");
             int enemyPos = dll.getPositionFromString("E");
 
+            int randomNum = rand() % 6 + 5;
+            for (int i = 0; i < randomNum; ++i) {
+                gotoxy(4, 26);
+                ct::p | "                                 ";
+                gotoxy(6, 26);
+                ct::p | "Enemy's Turn " ;
+                for (int j = 0; j < i; ++j) {
+                    ct::p | ".";
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(400));
+            }
+
             // Enemy's turn
+            if (std::visit([](auto& e) { return e.getCards().empty(); }, enemy)) {
+                enemyTurnCounter++;
+                Sleep(1000);
+                if (enemyTurnCounter >= 5) {
+                    enemyTurnCounter = 0;
+                    int numCards = rand() % 2 + 1;
+                    for (int i = 0; i < numCards; ++i) {
+                        std::visit([&](auto& e) {
+                            int cardType = rand() % 5;
+                            CardVariant newCard;
+                            switch (cardType) {
+                                case 0: newCard = DoubleSlash(); break;
+                                case 1: newCard = Bow(); break;
+                                case 2: newCard = SingleSlash(); break;
+                                case 3: newCard = Dash(); break;
+                                case 4: newCard = ShadowStep(); break;
+                            }
+                            e.addCard(newCard);
+                        }, enemy);
+                    }
+                    screen.updateOutputConsole("Enemy has reinitialized " + std::to_string(numCards) + " cards!");
+                }
+            }
             enemyTurn(playerPos, enemyPos);
             {
                 std::vector<std::string> attackStackNames;
@@ -332,14 +411,34 @@ public:
                 }
                 screen.updateEnemyAttackStack(attackStackNames);
             }
+            screen.updatePlayerHP(player.getHealth(), player.getMaxHealth());
+            printTiles(player.getDirection(), std::visit([](auto& e) { return e.getDirection(); }, enemy));
             if (!player.isAlive()) {
-                std::cout << "Player defeated!" << std::endl;
+                ct::p | "Player defeated!\n";
                 std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-                return false; // Player lost
+                return false;
             }
-
+            
             // Player's turn
             playerTurn(playerPos, enemyPos);
+            playerTurnCounter++;
+            if (playerTurnCounter >= 5 && player.getCards().empty()) {
+                playerTurnCounter = 0; 
+                int numCards = rand() % 4 + 1;
+                for (int i = 0; i < numCards; ++i) {
+                    int cardType = rand() % 5;
+                    CardVariant newCard;
+                    switch (cardType) {
+                        case 0: newCard = DoubleSlash(); break;
+                        case 1: newCard = Bow(); break;
+                        case 2: newCard = SingleSlash(); break;
+                        case 3: newCard = Dash(); break;
+                        case 4: newCard = ShadowStep(); break;
+                    }
+                    player.addCard(newCard);
+                }
+                screen.updateOutputConsole("Player has reinitialized " + std::to_string(numCards) + " cards!");
+            }
             {
                 std::vector<std::string> attackStackNames;
                 for (const auto& card : player.getAttackStack()) {
@@ -348,13 +447,14 @@ public:
                 screen.updatePlayerAttackStack(attackStackNames);
             }
             if (!std::visit([](auto& e) { return e.isAlive(); }, enemy)) {
-                std::cout << "Enemy defeated!" << std::endl;
+                printTiles(player.getDirection(), std::visit([](auto& e) { return e.getDirection(); }, enemy));
+                ct::p | "Enemy defeated!\n";
                 std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-                return true; // Player won
+                return true;
             }
-            screen.updatePlayerHP(player.getHealth(), player.getMaxHealth());
             screen.updateEnemyHP(std::visit([](auto& e) { return e.getHealth(); }, enemy), std::visit([](auto& e) { return e.getMaxHealth(); }, enemy));
         }
+        return false;
     }
 
     void playerTurn(int playerPos, int enemyPos) {
@@ -362,7 +462,7 @@ public:
 
         while (!turnEnded) {
             int choice;
-            std::cout << ">> Your Turn: ";
+            ct::p | ">> Your Turn: ";
             std::cin >> choice;
 
             switch (choice) {
@@ -379,7 +479,11 @@ public:
                 turnEnded = true;
                 break;
             case 4:
-                executeAttackStack(playerPos, enemyPos);
+                if (!player.attackCardsStackEmpty()) {
+                    executeAttackStack(playerPos, enemyPos);
+                } else {
+                    screen.updateOutputConsole("No cards in the attack stack!");
+                }
                 turnEnded = true;
                 break; 
             case 5:
@@ -387,7 +491,7 @@ public:
                 turnEnded = true;
                 break;
             default:
-                std::cout << "Invalid choice!\n";
+                ct::p | "Invalid choice!\n";
                 break;
             }
         }
@@ -396,7 +500,7 @@ public:
     void addCardToAttackStack() {
         std::string consoleText = "";
         auto cards = player.getCards();
-        std::cout << ">> Select a card to add to the attack stack: (-1 to return)";
+        ct::p | ">> Select a card to add to the attack stack: (-1 to return)";
 
         int cardChoice;
         while (true) {
@@ -411,7 +515,6 @@ public:
                 player.addCardToAttackStack(selectedCard);
                 player.removeCard(cards[cardChoice]);
                 consoleText = "Player added " + std::visit([](const auto& card) { return card.getName(); }, selectedCard) + " to the attack stack.";
-                cards = player.getCards();
                 break; 
             }
         }
@@ -419,7 +522,6 @@ public:
     }
 
     void executeAttackStack(int playerPos, int enemyPos) {
-        std::string text = "";
         while (!player.attackCardsStackEmpty()) {
             auto attackCard = player.topCardFromAttackStack();
             player.removeCardFromAttackStack();
@@ -427,9 +529,9 @@ public:
             std::visit([&](auto& card) {
                 if (canAttack(player, enemyPos, playerPos, card)) {
                     performAttack(card, enemy);
+                    screen.updateOutputConsole("Player used " + card.getName() + "!");
                 } else {
-                    text = card.getName() + " cannot be used by the player!";
-                    screen.updateOutputConsole(text);
+                    screen.updateOutputConsole(card.getName() + " cannot be used by the player!");
                 }
             }, attackCard);
         }
@@ -440,11 +542,8 @@ public:
         std::string enemyTurn = "";
 
         while (!turnEnded) {
-            int choice = rand() % 2 + 1;
-
-            switch (choice) {
-            case 1:
-                std::visit([&](auto& enemyCharacter) {
+            std::visit([&](auto& enemyCharacter) {
+                if (enemyCharacter.attackCardsStackEmpty()) {
                     auto cards = enemyCharacter.getCards();
                     if (!cards.empty()) {
                         int cardIndex = rand() % cards.size();
@@ -453,18 +552,24 @@ public:
                         enemyCharacter.removeCard(cards[cardIndex]);
                         enemyTurn = "Enemy added " + std::visit([](const auto& card) { return card.getName(); }, selectedCard) + " to the attack stack.";
                     } else {
-                        enemyTurn = "Enemy has no cards to add to the attack stack!";
+                        moveEnemyAway(playerPos, enemyPos);
+                        enemyTurn = "Enemy has no cards to add is on cooldown and moved away from the player!";
                     }
-                }, enemy);
-                turnEnded = true;
-                break;
-            case 2:
-                std::visit([&](auto& enemyCharacter) {
-                    if (!enemyCharacter.attackCardsStackEmpty()) {
+                } else {
+                    int distance = std::abs(playerPos - enemyPos);
+                    if (distance > 1) {
+                        moveEnemyToward(playerPos, enemyPos);
+                        enemyTurn = "Enemy moved towards the player.";
+                    } else {
                         auto attackCard = enemyCharacter.topCardFromAttackStack();
                         enemyCharacter.removeCardFromAttackStack();
 
                         std::visit([&](auto& card) {
+                            if ((playerPos > enemyPos && enemyCharacter.getDirection() != 1) ||
+                                (playerPos < enemyPos && enemyCharacter.getDirection() != -1)) {
+                                enemyCharacter.changeDirection();
+                            }
+
                             if (canAttack(enemyCharacter, playerPos, enemyPos, card)) {
                                 performAttack(card, player);
                                 enemyTurn = "Enemy used " + card.getName() + "!";
@@ -472,18 +577,19 @@ public:
                                 enemyTurn = card.getName() + " cannot be used by the enemy!";
                             }
                         }, attackCard);
-                    } else {
-                        enemyTurn = "Enemy has no cards in the attack stack!";
                     }
-                }, enemy);
-                turnEnded = true;
-                break;
-            default:
-                enemyTurn = "Something went wrong 404";
-                break;
+                }
+            }, enemy);
+            turnEnded = true;
+            screen.updateOutputConsole(enemyTurn);
+
+            // Update the enemy attack stack on the screen
+            std::vector<std::string> attackStackNames;
+            for (const auto& card : std::visit([](auto& e) { return e.getAttackStack(); }, enemy)) {
+                attackStackNames.push_back(std::visit([](const auto& c) { return c.getName(); }, card));
             }
+            screen.updateEnemyAttackStack(attackStackNames);
         }
-        screen.updateOutputConsole(enemyTurn);
     }
 
     void moveEnemyToward(int playerPos, int enemyPos) {
@@ -521,10 +627,31 @@ public:
     }
 
     void printTiles(int playerDirection, int enemyDirection) {
+        system("cls");
         std::vector<std::string> tiles = dll.getValues();
         screen.updateTiles(tiles, playerDirection, enemyDirection);
+        screen.updatePlayerHP(player.getHealth(), player.getMaxHealth());
+        screen.updateEnemyHP(std::visit([](auto& e) { return e.getHealth(); }, enemy), std::visit([](auto& e) { return e.getMaxHealth(); }, enemy));
+        {
+            std::vector<std::string> attackStackNames;
+            for (const auto& card : player.getAttackStack()) {
+                attackStackNames.push_back(std::visit([](const auto& c) { return c.getName(); }, card));
+            }
+            screen.updatePlayerAttackStack(attackStackNames);
+        }
+        {
+        std::vector<std::string> attackStackNames;
+        for (const auto& card : std::visit([](auto& e) { return e.getAttackStack(); }, enemy)) {
+            attackStackNames.push_back(std::visit([](const auto& c) { return c.getName(); }, card));
+        }
+        screen.updateEnemyAttackStack(attackStackNames);
+        }
+        std::vector<std::string> cardNames;
+        for (const auto& card : player.getCards()) {
+            cardNames.push_back(std::visit([](const auto& c) { return c.getName(); }, card));
+        }
+        screen.updateAvailableCards(cardNames);
         screen.print();
-        screen.printOutputConsole();
     }
 
     void updateTilesOnScreen(int playerDirection, int enemyDirection) {
@@ -575,8 +702,6 @@ public:
     template <typename T, typename CardType>
     void performAttack(const CardType& card, T& target) {
         std::string attackText = "";
-        attackText = card.getName() + " is used by " + (std::is_same_v<T, Player> ? "Player" : "Enemy") + "!";
-        screen.updateOutputConsole(attackText);
 
         bool isInRange = false;
 
@@ -592,8 +717,6 @@ public:
                     dll.setNodeAt(newPos, {{newPos, "P"}});
                     dll.setNodeAt(attackerPos, {{attackerPos, "X"}});
                     attackerPos = newPos;
-
-                    updateTilesOnScreen(player.getDirection(), std::visit([](auto& e) { return e.getDirection(); }, enemy));
                 } else {
                     break;
                 }
@@ -617,7 +740,6 @@ public:
                 } else {
                     attackText = "ShadowStep cannot be used! Enemy is at the edge.";
                 }
-                screen.updateOutputConsole(attackText);
             }
         } else {
             int attackerPos = dll.getPositionFromString("P");
@@ -638,11 +760,10 @@ public:
                 card.use(target);
                 attackText = card.getName() + " was used by " + (std::is_same_v<T, Player> ? "Player" : "Enemy") + "!";
             }
-            screen.updateOutputConsole(attackText);
         } else {
             attackText = card.getName() + " was ineffective (enemy out of range).";
-            screen.updateOutputConsole(attackText);
         }
+        screen.updateOutputConsole(attackText);
     }
 
     ~Combat() = default;
@@ -695,11 +816,11 @@ public:
             validMap = validateMap();
 
             if (!validMap) {
-                std::cout << "Map generation failed, regenerating...\n";
+                ct::p | "Map generation failed, regenerating...\n";
             }
         }
 
-        std::cout << "Valid map generated with " << rooms.size() << " rooms.\n";
+        ct::p | "Valid map generated with " | rooms.size() | " rooms.\n";
     }
 
     void connectRooms() {
@@ -716,10 +837,9 @@ public:
                 }
             }
 
-            std::sort(potentialConnections.begin(), potentialConnections.end(),
-                    [&room](const Room* a, const Room* b) {
-                        return room.distanceTo(*a) < room.distanceTo(*b);
-                    });
+            std::sort(potentialConnections.begin(), potentialConnections.end(), [&room](const Room* a, const Room* b) {
+                return room.distanceTo(*a) < room.distanceTo(*b);
+            });
 
             int connectionsToAdd = rand() % (maxConnections - minConnections + 1) + minConnections;
             for (int i = 0; i < connectionsToAdd && i < potentialConnections.size(); ++i) {
@@ -942,8 +1062,11 @@ public:
     }
 };
 
-std::set<std::pair<int, int>> Floor::occupiedPositions;
 
+
+
+
+std::set<std::pair<int, int>> Floor::occupiedPositions;
 
 class RoomBase {
 public:
@@ -955,6 +1078,9 @@ public:
         throw std::runtime_error("No enemy in this room");
     }
 };
+
+
+
 
 class LargeRoom : public RoomBase {
 private:
@@ -987,7 +1113,7 @@ public:
 
     void enterRoom(Player& player) override {
         if (isCleared) {
-            std::cout << "You have already cleared this room!" << std::endl;
+            ct::p | "You have already cleared this room!\n";
             getchar();
             return;
         }
@@ -997,14 +1123,16 @@ public:
 
         if (combatWon) {
             isCleared = true; 
-            std::cout << "Room is cleared!" << std::endl;
+            ct::p | "Room is cleared!\n";
         } else {
-            std::cout << "You were defeated in this room!" << std::endl;
+            ct::p | "You were defeated in this room!\n";
         }
-        getchar();
     }
 
 };
+
+
+
 
 class TreasureRoom : public RoomBase {
 private:
@@ -1014,8 +1142,7 @@ public:
 
     void enterRoom(Player& player) override {
         if (isCleared) {
-            std::cout << "You have already cleared this room!" << std::endl;
-            getchar();
+            ct::p | "You have already cleared this room!\n";
             return;
         } else {
             screen.InitializeTreasureRoom();
@@ -1030,14 +1157,12 @@ public:
                 };
                 int cardIndex = rand() % possibleCards.size();
                 player.addCard(possibleCards[cardIndex]);
-                std::cout << "You received a " << std::visit([](auto& card) { return card.getName(); }, possibleCards[cardIndex]) << " card!" << std::endl;
             } else {
                 // Give a healing potion
                 player.heal(2);
-                std::cout << "You received a healing potion! Health increased by 2." << std::endl;
             }
             screen.print();
-            Sleep(5000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
             isCleared = true; 
         }
@@ -1047,6 +1172,10 @@ public:
         return false; 
     }
 };
+
+
+
+
 
 class TrapRoom : public RoomBase {
 private:
@@ -1069,15 +1198,13 @@ public:
             };
             int cardIndex = rand() % possibleCards.size();
             auto& attackCard = possibleCards[cardIndex];
-            std::cout << "You are attacked with " << std::visit([](auto& card) { return card.getName(); }, attackCard) << "!" << std::endl;
             std::visit([&](auto& card) { card.use(player); }, attackCard); // Apply the card's effect on the player
         } else {
             player.damage(1);
-            std::cout << "You are poisoned! Health decreased by 1." << std::endl;
         }
 
         screen.print();
-        Sleep(5000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
         isCleared = true;
     }
 
@@ -1085,6 +1212,10 @@ public:
         return false;
     }
 };
+
+
+
+
 
 class BossRoom : public RoomBase {
 private:
@@ -1096,27 +1227,28 @@ public:
     BossRoom(const Room& room, Player& player) : room(room), enemy(std::in_place_type<InfernalWarlord>), combat(player, enemy) {}
     void enterRoom(Player& player) override {
         if (isCleared) {
-            std::cout << "You have already cleared this room!" << std::endl;
+            ct::p | "You have already cleared this room!\n";
             getchar();
             return;
         } else {
-            std::cout << "You have entered the boss room!" << std::endl;
+            screen.initializeFight();
             combat.makeFloor();
             bool combatWon = combat.startCombat();
 
             if (combatWon) {
                 isCleared = true;
-                std::cout << "Boss defeated! Room is cleared!" << std::endl;
+                ct::p | "Boss defeated! Room is cleared!\n";
             } else {
-                std::cout << "You were defeated by the boss!" << std::endl;
+                ct::p | "You were defeated by the boss!\n";
             }
-            getchar();
         }
     }
     bool hasEnemy() const override {
         return true;
     }
 };
+
+
 
 
 using RoomVariant = std::variant<std::unique_ptr<LargeRoom>, std::unique_ptr<TreasureRoom>, std::unique_ptr<TrapRoom>, std::unique_ptr<BossRoom>>;
@@ -1136,14 +1268,11 @@ public:
     }
 
     void MainLoop() {
-        int count = 50;
+        system("cls");
+        ChangeBackgroundColor(7);
+        ChangeTextColor(0);
         screen.InitializeInstructionsWindow();
-        while(count > 0) {
-            screen.print();
-            Sleep(100);
-            screen.setString(10, 30, "Story Screen will close in " + std::to_string(count));
-            count--;
-        }
+        getchar();
 
         std::vector<Room> rooms = floor.getRooms();
 
@@ -1171,17 +1300,17 @@ public:
             screen.MapOptions(currentRoom, rooms, visitedRooms);
             floor.DrawMap(visitedRooms);
 
-            std::cout << "Select a room to move to (or enter -1 to exit): ";
+            ct::p | "Select a room to move to (or enter -1 to exit): ";
             int choice;
             std::cin >> choice;
 
             if (choice == -1) {
-                std::cout << "Exiting the game..." << std::endl;
+                ct::p | "Exiting the game...\n";
                 break;
             }
 
             if (choice < 0 || choice >= currentRoom.connectedRooms.size()) {
-                std::cout << "Invalid choice!" << std::endl;
+                ct::p | "Invalid choice!\n";
                 continue;
             }
 
@@ -1194,7 +1323,7 @@ public:
                 std::visit([&](auto& roomPtr) {
                     roomPtr->enterRoom(player);
                     if (!player.isAlive()) {
-                        std::cout << "You died! Game Over." << std::endl;
+                        ct::p | "You died! Game Over.\n";
                         exit(0);
                     }
                 }, it->second);
@@ -1202,7 +1331,7 @@ public:
         }
 
         if (!player.isAlive()) {
-            std::cout << "Game Over! You have been defeated." << std::endl;
+            ct::p | "Game Over! You have been defeated.\n";
         }
     }
 
