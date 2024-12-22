@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <sstream>
-#include "CustomNamespace.h"
+#include "../Utilities/CustomNamespace.h"
 #include "Logic.h"
 
 #define SCREEN_WIDTH 140

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <unordered_set>
-#include "Enums.h"
+#include "../Utilities/Enums.h"
 
 struct Room {
     int roomNumber;

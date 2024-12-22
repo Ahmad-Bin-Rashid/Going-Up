@@ -12,13 +12,13 @@
 #include <unordered_map>
 #include <chrono>
 #include <thread>
-#include "CustomNamespace.h"
-#include "Utility.h"
+#include "../Utilities/CustomNamespace.h"
+#include "../Utilities/Utility.h"
 #include "Room.h"
-#include "Enums.h"
-#include "DoublyLinkedList.h"
-#include "Stack.h"
-#include "Queue.h"
+#include "../Utilities/Enums.h"
+#include "../DataStructures/DoublyLinkedList.h"
+#include "../DataStructures/Stack.h"
+#include "../DataStructures/Queue.h"
 #include "UI.h"
 
 #define MAX_MAP_X 80

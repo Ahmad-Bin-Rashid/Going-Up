@@ -1,5 +1,5 @@
-#include "Logic.h"
-#include "UI.h"
+#include "src/Logic.h"
+#include "src/UI.h"
 
 int main() {
     GameLogic game(1, 6, 8);
