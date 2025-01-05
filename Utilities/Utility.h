@@ -7,7 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <windows.h>
-#include "../src/Room.h"
+#include "../Src/Room.h"
 #include "CustomNamespace.h"
 #include <random>
 
